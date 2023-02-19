@@ -1,14 +1,15 @@
 using System.Security.Cryptography;
+using ApiCommon.Logging;
 using Identity.Authentication;
 using Identity.Authorization;
 using Identity.Domain;
 using Identity.Middlewares;
 using Identity.Repo;
 using Identity.Utils;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using NHibernate;
 
-async Task SetupSystemUser(WebApplication? app, IConfiguration config)
+Task SetupSystemUser(WebApplication? app, IConfiguration config)
 {
     if (app == null)
     {
@@ -16,10 +17,13 @@ async Task SetupSystemUser(WebApplication? app, IConfiguration config)
     }
 
     using var scope = app.Services.CreateScope();
-    await using var ctx = scope.ServiceProvider.GetRequiredService<IdentityContext>();
+    var sessionFactory = scope.ServiceProvider.GetRequiredService<ISessionFactory>();
 
     var logger = app.Logger;
-    var existsInDb = ctx.Accounts.FirstOrDefault(e => e.Name == "System") != null;
+    using var session = sessionFactory.OpenSession();
+    using var transaction = session.BeginTransaction();
+
+    var existsInDb = session.Query<Account>().Any(e => e.Name == "System");
     if (!existsInDb)
     {
         var envPass = Environment.GetEnvironmentVariable("MDS_SYS_PASSWORD");
@@ -27,15 +31,14 @@ async Task SetupSystemUser(WebApplication? app, IConfiguration config)
         var userId = config["MdsSettings:systemUser"] ?? "mdsCloud";
         var account = new Account()
         {
-            Id = 1,
             Name = "System",
-            Created = DateTime.Now,
+            Created = DateTime.Now.ToUniversalTime(),
             IsActive = true,
         };
         var user = new User()
         {
             Id = userId,
-            Created = DateTime.Now,
+            Created = DateTime.Now.ToUniversalTime(),
             IsActive = true,
             IsPrimary = true,
             Email = "system@localhost",
@@ -43,14 +46,21 @@ async Task SetupSystemUser(WebApplication? app, IConfiguration config)
             ActivationCode = null,
             FriendlyName = "System",
         };
-        account.Users.Add(user);
-        ctx.Accounts.Add(account);
+        session.SaveOrUpdate(account);
+        user.Account = account;
+        session.SaveOrUpdate(user);
+        // ctx.Accounts.Add(account);
         try
         {
-            ctx.SaveChanges();
+            transaction.Commit();
+            // ctx.SaveChanges();
             logger.Log(LogLevel.Information, "System user created");
 
-            ctx.Database.ExecuteSql($"ALTER TABLE Accounts AUTO_INCREMENT=1001");
+            session
+                .CreateSQLQuery($"ALTER SEQUENCE Account_PK_seq RESTART WITH 1001")
+                .ExecuteUpdate();
+            // session.CreateSQLQuery($"ALTER TABLE Accounts AUTO_INCREMENT=1001").ExecuteUpdate();
+            // ctx.Database.ExecuteSql($"ALTER TABLE Accounts AUTO_INCREMENT=1001");
             if (envPass == null)
             {
                 logger.Log(
@@ -65,6 +75,15 @@ async Task SetupSystemUser(WebApplication? app, IConfiguration config)
             logger.Log(LogLevel.Error, ex, "Failed to create system user");
         }
     }
+
+    return Task.CompletedTask;
+}
+
+ISessionFactory CreateSessionFactory(IConfiguration config)
+{
+    var fluentConfig = NhibernateConfigGenerator.Generate(config);
+    // fluentConfig.ExposeConfiguration((config) => new SchemaExport(config).Create(false, true));
+    return fluentConfig.BuildSessionFactory();
 }
 
 var configRoot = new ConfigurationBuilder()
@@ -80,25 +99,28 @@ builder.Services.AddSwaggerGen(sg =>
     sg.EnableAnnotations();
 });
 
+var nhibernateSessionFactory = CreateSessionFactory(builder.Configuration);
+
 builder.Services.AddSingleton<IConfiguration>(configRoot);
 builder.Services.AddSingleton<IRequestUtilities>(requestUtilities);
+builder.Services.AddSingleton<ISessionFactory>(nhibernateSessionFactory);
 
 // Add services to the container.
 
 builder.Services.AddControllers();
-builder.Services.AddDbContext<IdentityContext>(opt =>
-{
-    opt.UseMySql(
-        builder.Configuration.GetConnectionString("DBConnection"),
-        ServerVersion.AutoDetect(builder.Configuration.GetConnectionString("DBConnection")),
-        b => b.EnableRetryOnFailure(5, TimeSpan.FromSeconds(10), null)
-    );
-});
 
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
-builder.Services.AddLogging();
+builder.Services.AddLogging(config =>
+{
+    config.AddMdsLogStashLogger(config =>
+    {
+        // TODO: Get these values reading from config directly.
+        config.ServiceName = configRoot["Logging:MdsLogger:ServiceName"];
+        config.LogStashUrl = configRoot["Logging:MdsLogger:LogStashUrl"];
+    });
+});
 
 builder.Services.AddAuthorization(PolicyManager.ConfigureAuthorizationPolicies);
 builder.Services

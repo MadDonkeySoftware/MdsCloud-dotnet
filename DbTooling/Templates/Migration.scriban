@@ -1,0 +1,23 @@
+using FluentMigrator;
+
+namespace DbTooling.Migrations.Identity;
+
+[Tags("{{service}}")]
+[Tags("Production", "Development")]
+[Migration({{epoch}}, "{{description}}")]
+public class {{name}} : Migration
+{
+    public override void Up()
+    {
+        // csharpier-ignore-start
+        /* TODO */
+        // csharpier-ignore-end
+    }
+
+    public override void Down()
+    {
+        // csharpier-ignore-start
+        /* TODO */
+        // csharpier-ignore-end
+    }
+}

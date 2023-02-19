@@ -1,10 +1,11 @@
 using Identity.Authorization;
+using Identity.Domain;
 using Identity.DTOs;
 using Identity.DTOs.User;
-using Identity.Repo;
 using Identity.Utils;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using NHibernate;
 using Swashbuckle.AspNetCore.Annotations;
 
 namespace Identity.Controllers.V1;
@@ -16,20 +17,17 @@ namespace Identity.Controllers.V1;
 public class UserController : ControllerBase
 {
     private readonly ILogger<UserController> _logger;
-    private readonly IdentityContext _context;
-    private readonly IConfiguration _configuration;
+    private readonly ISessionFactory _sessionFactory;
     private readonly IRequestUtilities _requestUtilities;
 
     public UserController(
         ILogger<UserController> logger,
-        IdentityContext context,
-        IConfiguration configuration,
+        ISessionFactory sessionFactory,
         IRequestUtilities requestUtilities
     )
     {
         _logger = logger;
-        _context = context;
-        _configuration = configuration;
+        _sessionFactory = sessionFactory;
         _requestUtilities = requestUtilities;
     }
 
@@ -68,10 +66,11 @@ public class UserController : ControllerBase
         [FromBody] UpdateUserRequestBody body
     )
     {
+        using var session = _sessionFactory.OpenSession();
         var shouldUpdate = false;
         var jwt = _requestUtilities.GetRequestJwt(authorization);
         var userId = jwt.Claims.First(c => c.Type == "UserId").Value;
-        var user = _context.Users.First(u => u.Id == userId);
+        var user = session.Query<User>().First(u => u.Id == userId);
 
         if (body.OldPassword != null && body.NewPassword != null)
         {
@@ -101,7 +100,7 @@ public class UserController : ControllerBase
             return FailRequest("Found no action to perform");
         }
 
-        _context.SaveChanges();
+        session.SaveOrUpdate(user);
         return Ok();
     }
 }

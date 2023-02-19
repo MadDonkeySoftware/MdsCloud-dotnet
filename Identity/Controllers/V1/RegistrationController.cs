@@ -1,10 +1,10 @@
 using Identity.Domain;
 using Identity.DTOs;
 using Identity.DTOs.Registration;
-using Identity.Repo;
 using Identity.Utils;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using NHibernate;
 using Swashbuckle.AspNetCore.Annotations;
 
 namespace Identity.Controllers.V1;
@@ -18,19 +18,19 @@ namespace Identity.Controllers.V1;
 public class RegistrationController : ControllerBase
 {
     private readonly ILogger<RegistrationController> _logger;
-    private readonly IdentityContext _context;
+    private readonly ISessionFactory _sessionFactory;
     private readonly IConfiguration _configuration;
     private readonly IRequestUtilities _requestUtilities;
 
     public RegistrationController(
         ILogger<RegistrationController> logger,
-        IdentityContext context,
+        ISessionFactory sessionFactory,
         IConfiguration configuration,
         IRequestUtilities requestUtilities
     )
     {
         _logger = logger;
-        _context = context;
+        _sessionFactory = sessionFactory;
         _configuration = configuration;
         _requestUtilities = requestUtilities;
     }
@@ -45,8 +45,11 @@ public class RegistrationController : ControllerBase
     )]
     public IActionResult Get([FromBody] RegistrationRequestBody body)
     {
-        var accountExists = _context.Accounts.Any(e => e.Name == body.AccountName);
-        var userExists = _context.Users.Any(e => e.Id == body.UserId);
+        using var session = _sessionFactory.OpenSession();
+        using var transaction = session.BeginTransaction();
+
+        var accountExists = session.Query<Account>().Any(e => e.Name == body.AccountName);
+        var userExists = session.Query<User>().Any(e => e.Id == body.UserId);
 
         if (accountExists || userExists)
         {
@@ -67,14 +70,14 @@ public class RegistrationController : ControllerBase
         var newAccount = new Account
         {
             Name = body.AccountName,
-            Created = DateTime.Now,
+            Created = DateTime.Now.ToUniversalTime(),
             IsActive = bypassActivation,
         };
         var newUser = new User
         {
             Id = body.UserId,
             Account = newAccount,
-            Created = DateTime.Now,
+            Created = DateTime.Now.ToUniversalTime(),
             FriendlyName = body.FriendlyName,
             ActivationCode = RandomStringGenerator.GenerateString(32),
             IsPrimary = true,
@@ -84,8 +87,11 @@ public class RegistrationController : ControllerBase
         };
 
         newAccount.Users.Add(newUser);
-        _context.Accounts.Add(newAccount);
-        _context.SaveChanges();
+
+        session.SaveOrUpdate(newAccount);
+        session.SaveOrUpdate(newUser);
+        transaction.Commit();
+        // _context.SaveChanges();
 
         return Ok(new { AccountId = newAccount.Id.ToString(), Status = "Success", });
     }

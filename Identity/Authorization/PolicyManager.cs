@@ -16,5 +16,25 @@ public static class PolicyManager
                 policy.RequireAuthenticatedUser();
             }
         );
+
+        options.AddPolicy(
+            Policies.Impersonator,
+            policy =>
+            {
+                policy.RequireRole(Roles.Impersonator);
+                policy.AuthenticationSchemes.Add(JwtAuthentication.AuthenticationScheme);
+                policy.RequireAuthenticatedUser();
+            }
+        );
+
+        options.AddPolicy(
+            Policies.System,
+            policy =>
+            {
+                policy.RequireRole(Roles.SystemAccount);
+                policy.AuthenticationSchemes.Add(JwtAuthentication.AuthenticationScheme);
+                policy.RequireAuthenticatedUser();
+            }
+        );
     }
 }

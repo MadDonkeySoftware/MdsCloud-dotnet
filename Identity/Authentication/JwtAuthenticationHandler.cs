@@ -1,10 +1,13 @@
 using System.Security.Principal;
 using System.Text.Encodings.Web;
 using Identity.Authorization;
+using Identity.Domain;
 using Identity.Repo;
 using Identity.Utils;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.Extensions.Options;
+using NHibernate;
+using ILoggerFactory = Microsoft.Extensions.Logging.ILoggerFactory;
 
 namespace Identity.Authentication;
 
@@ -12,12 +15,12 @@ public class JwtAuthenticationHandler : AuthenticationHandler<JwtKeyAuthenticati
 {
     private readonly IConfiguration _configuration;
     private readonly IRequestUtilities _requestUtilities;
-    private readonly IdentityContext _identityContext;
+    private readonly ISessionFactory _sessionFactory;
 
     public JwtAuthenticationHandler(
         IConfiguration configuration,
         IRequestUtilities requestUtilities,
-        IdentityContext identityContext,
+        ISessionFactory sessionFactory,
         IOptionsMonitor<JwtKeyAuthenticationOptions> options,
         ILoggerFactory logger,
         UrlEncoder encoder,
@@ -27,7 +30,7 @@ public class JwtAuthenticationHandler : AuthenticationHandler<JwtKeyAuthenticati
     {
         _configuration = configuration;
         _requestUtilities = requestUtilities;
-        _identityContext = identityContext;
+        _sessionFactory = sessionFactory;
     }
 
     protected override async Task<AuthenticateResult> HandleAuthenticateAsync()
@@ -41,6 +44,7 @@ public class JwtAuthenticationHandler : AuthenticationHandler<JwtKeyAuthenticati
 
         try
         {
+            var session = _sessionFactory.OpenSession();
             var jwtValidatedToken = _requestUtilities.GetRequestJwt(headerAuthorization.ToString());
 
             var accountId = jwtValidatedToken.Claims.First(c => c.Type == "AccountId").Value;
@@ -48,8 +52,8 @@ public class JwtAuthenticationHandler : AuthenticationHandler<JwtKeyAuthenticati
             var friendlyName = jwtValidatedToken.Claims.First(c => c.Type == "FriendlyName").Value;
 
             var roles = new List<string> { Roles.User };
-            var user = _identityContext.Users.First(u => u.Id == userId);
-            await _identityContext.Entry(user).Reference(u => u.Account).LoadAsync();
+            var user = session.Query<User>().First(u => u.Id == userId);
+            // await _identityContext.Entry(user).Reference(u => u.Account).LoadAsync();
 
             if (!user.IsActive)
             {
@@ -67,6 +71,7 @@ public class JwtAuthenticationHandler : AuthenticationHandler<JwtKeyAuthenticati
             if (user.Account.Id == 1)
             {
                 roles.Add(Roles.SystemAccount);
+                roles.Add(Roles.Impersonator);
             }
 
             var identity = new GenericIdentity($"{accountId}:{userId}");

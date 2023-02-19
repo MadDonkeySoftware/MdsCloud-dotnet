@@ -8,10 +8,10 @@ public class Account
         Users = new List<User>();
     }
 
-    public ulong Id { get; set; }
-    public string Name { get; set; } = "";
-    public virtual List<User> Users { get; set; }
-    public bool IsActive { get; set; }
-    public DateTime Created { get; set; }
-    public DateTime LastActivity { get; set; }
+    public virtual long Id { get; protected set; }
+    public virtual string Name { get; set; } = "";
+    public virtual IList<User> Users { get; set; }
+    public virtual bool IsActive { get; set; }
+    public virtual DateTime Created { get; set; }
+    public virtual DateTime LastActivity { get; set; }
 }

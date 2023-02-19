@@ -11,8 +11,8 @@ public class CrossSystemTraceIdMiddleware
 
     public async Task InvokeAsync(HttpContext context, ILogger<CrossSystemTraceIdMiddleware> logger)
     {
-        logger.Log(LogLevel.Information, "In custom middleware");
-        logger.Log(LogLevel.Information, "Path: {path}", context.Request.Path);
+        // logger.Log(LogLevel.Information, "In custom middleware");
+        // logger.Log(LogLevel.Information, "Path: {path}", context.Request.Path);
 
         context.Response.Headers.Add(
             "mds-trace-id",

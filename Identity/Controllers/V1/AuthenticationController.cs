@@ -1,13 +1,14 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Security.Cryptography;
+using Identity.Domain;
 using Identity.DTOs;
 using Identity.DTOs.Authentication;
-using Identity.Repo;
 using Identity.Utils;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
+using NHibernate;
 using Swashbuckle.AspNetCore.Annotations;
 
 namespace Identity.Controllers.V1;
@@ -20,19 +21,19 @@ namespace Identity.Controllers.V1;
 public class AuthenticationController : ControllerBase
 {
     private readonly ILogger<AuthenticationController> _logger;
-    private readonly IdentityContext _context;
+    private readonly ISessionFactory _sessionFactory;
     private readonly IConfiguration _configuration;
     private readonly IRequestUtilities _requestUtilities;
 
     public AuthenticationController(
         ILogger<AuthenticationController> logger,
-        IdentityContext context,
+        ISessionFactory sessionFactory,
         IConfiguration configuration,
         IRequestUtilities requestUtilities
     )
     {
         _logger = logger;
-        _context = context;
+        _sessionFactory = sessionFactory;
         _configuration = configuration;
         _requestUtilities = requestUtilities;
     }
@@ -68,11 +69,12 @@ public class AuthenticationController : ControllerBase
     )]
     public IActionResult Post([FromBody] AuthenticationRequestBody body)
     {
-        ulong parsedAccountId = ulong.TryParse(body.AccountId, out parsedAccountId)
+        using var session = _sessionFactory.OpenSession();
+        long parsedAccountId = long.TryParse(body.AccountId, out parsedAccountId)
             ? parsedAccountId
             : 0;
-        var account = _context.Accounts.FirstOrDefault(e => e.Id == parsedAccountId);
-        var user = _context.Users.FirstOrDefault(e => e.Id == body.UserId);
+        var account = session.Query<Account>().FirstOrDefault(e => e.Id == parsedAccountId);
+        var user = session.Query<User>().FirstOrDefault(e => e.Id == body.UserId);
 
         if (account == null)
         {
