@@ -7,4 +7,6 @@ public sealed class MdsLoggerConfiguration
     public string? ServiceName { get; set; }
 
     public string? LogStashUrl { get; set; }
+
+    public bool Enabled { get; set; }
 }

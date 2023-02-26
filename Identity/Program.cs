@@ -119,6 +119,9 @@ builder.Services.AddLogging(config =>
         // TODO: Get these values reading from config directly.
         config.ServiceName = configRoot["Logging:MdsLogger:ServiceName"];
         config.LogStashUrl = configRoot["Logging:MdsLogger:LogStashUrl"];
+        config.Enabled =
+            bool.TryParse(configRoot["Logging:MdsLogger:Enabled"], out var loggerEnabled)
+            && loggerEnabled;
     });
 });
 

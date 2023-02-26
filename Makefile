@@ -17,6 +17,12 @@ compile:  ## Compiles the application down to a dist folder
 dev-install:  ## Installs the app in a way that modifications to the files are run easily
 	dotnet tool restore
 
+elk-stack-up:  ## Starts up the support / logging ELK stack
+	docker compose -f ./docker-compose.elk.yml up -d
+
+elk-stack-down:  ## Shuts down the support / logging ELK stack
+	docker compose -f ./docker-compose.elk.yml down -v
+
 format: autoformat  ## Alias to autoformat
 
 identity-keys:  ## Creates a keypair for Identity to use locally

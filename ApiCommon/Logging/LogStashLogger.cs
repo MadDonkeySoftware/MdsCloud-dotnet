@@ -1,11 +1,13 @@
 ﻿using System.Globalization;
+using System.Net;
 using System.Net.Http.Headers;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 
 namespace ApiCommon.Logging;
 
-internal class LogstashJsonPayload
+// TODO: pid, hostname, name,
+internal class LogstashPayload
 {
     [JsonProperty("name")]
     public string? Name { get; set; }
@@ -23,14 +25,43 @@ internal class LogstashJsonPayload
     public string? Message { get; set; }
 }
 
+internal class RetryArguments
+{
+    public int Attempts { get; private set; }
+    public int MaxAttempts { get; private set; }
+    public int Delay { get; private set; }
+
+    internal RetryArguments()
+        : this(5) { }
+
+    internal RetryArguments(int maxAttempts)
+    {
+        Attempts = 1;
+        Delay = 0;
+        MaxAttempts = maxAttempts;
+    }
+
+    internal void Increment()
+    {
+        Attempts += 1;
+        Delay = (int)(Math.Pow(2, Attempts) * 1000);
+    }
+
+    internal bool ShouldRetry()
+    {
+        return Attempts <= MaxAttempts;
+    }
+}
+
 public class LogStashLogger : ILogger
 {
-    private readonly string _name;
     private readonly Func<MdsLoggerConfiguration> _getCurrentConfig;
+    private readonly HttpClient _httpClient;
 
     public LogStashLogger(string name, Func<MdsLoggerConfiguration> getCurrentConfig)
     {
         _getCurrentConfig = getCurrentConfig;
+        _httpClient = new HttpClient();
     }
 
     public void Log<TState>(
@@ -43,17 +74,8 @@ public class LogStashLogger : ILogger
     {
         if (IsEnabled(logLevel))
         {
-            using HttpClient client = new();
-            client.DefaultRequestHeaders.Accept.Clear();
-            client.DefaultRequestHeaders.Accept.Add(
-                new MediaTypeWithQualityHeaderValue("application/json")
-            );
-            client.DefaultRequestHeaders.Add("User-Agent", "MDS Cloud API Logger");
-            // client.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("MDS Cloud API Logger"));
-
-            // TODO: pid, hostname, name,
-            var jsonBody = JsonConvert.SerializeObject(
-                new LogstashJsonPayload
+            PostLogstashPayload(
+                new LogstashPayload
                 {
                     Name = _getCurrentConfig().ServiceName,
                     Timestamp = DateTime.UtcNow.ToString("o", CultureInfo.InvariantCulture),
@@ -62,23 +84,66 @@ public class LogStashLogger : ILogger
                     Message = state != null ? state.ToString() : exception?.Message,
                 }
             );
-            // client.PostAsync(_getCurrentConfig().LogStashUrl, new StringContent(jsonBody));
-            var postTask = client.PostAsync(
-                _getCurrentConfig().LogStashUrl,
-                new StringContent(jsonBody)
-            );
-            postTask.Wait();
-            // var result = postTask.Result;
+        }
+    }
+
+    private async void PostLogstashPayload(
+        LogstashPayload payload,
+        RetryArguments? retryArguments = null
+    )
+    {
+        var request = new HttpRequestMessage(HttpMethod.Post, _getCurrentConfig().LogStashUrl);
+        request.Headers.Accept.Clear();
+        request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+        request.Headers.UserAgent.Clear();
+        request.Headers.Add("User-Agent", "MDS Cloud API Logger");
+
+        var jsonBody = JsonConvert.SerializeObject(payload);
+        request.Content = new StringContent(jsonBody);
+
+        try
+        {
+            var response = await _httpClient.SendAsync(request);
+            var retryStatuses = new List<HttpStatusCode>()
+            {
+                HttpStatusCode.BadGateway,
+                HttpStatusCode.NotFound
+            };
+            if (!retryStatuses.Contains(response.StatusCode))
+                return;
+
+            var retry = retryArguments ?? new RetryArguments();
+            if (!retry.ShouldRetry())
+                return;
+
+            retry.Increment();
+            await Task.Delay(retry.Delay);
+            PostLogstashPayload(payload, retry);
+        }
+        catch (Exception ex)
+        {
+            var retry = retryArguments ?? new RetryArguments();
+            if (retry.ShouldRetry())
+            {
+                retry.Increment();
+                await Task.Delay(retry.Delay);
+                PostLogstashPayload(payload, retry);
+            }
+            else
+            {
+                throw;
+            }
         }
     }
 
     public bool IsEnabled(LogLevel logLevel)
     {
-        return _getCurrentConfig().LogStashUrl != null;
+        return _getCurrentConfig().Enabled;
     }
 
     public IDisposable? BeginScope<TState>(TState state)
     {
+        _httpClient.Dispose();
         return null;
     }
 }
