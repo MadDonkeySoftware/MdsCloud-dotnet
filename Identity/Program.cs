@@ -1,9 +1,9 @@
 using System.Security.Cryptography;
 using ApiCommon.Logging;
+using ApiCommon.Middleware;
 using Identity.Authentication;
 using Identity.Authorization;
 using Identity.Domain;
-using Identity.Middlewares;
 using Identity.Repo;
 using Identity.Utils;
 using Microsoft.AspNetCore.Authentication.JwtBearer;

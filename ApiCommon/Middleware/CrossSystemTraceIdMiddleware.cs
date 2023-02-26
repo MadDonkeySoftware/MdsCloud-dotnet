@@ -1,18 +1,27 @@
-namespace Identity.Middlewares;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Logging;
+
+namespace ApiCommon.Middleware;
 
 public class CrossSystemTraceIdMiddleware
 {
     private readonly RequestDelegate _next;
+    private readonly ILogger<CrossSystemTraceIdMiddleware> _logger;
 
-    public CrossSystemTraceIdMiddleware(RequestDelegate next)
+    public CrossSystemTraceIdMiddleware(
+        RequestDelegate next,
+        ILogger<CrossSystemTraceIdMiddleware> logger
+    )
     {
         _next = next;
+        _logger = logger;
     }
 
-    public async Task InvokeAsync(HttpContext context, ILogger<CrossSystemTraceIdMiddleware> logger)
+    public async Task InvokeAsync(HttpContext context)
     {
-        // logger.Log(LogLevel.Information, "In custom middleware");
-        // logger.Log(LogLevel.Information, "Path: {path}", context.Request.Path);
+        _logger.Log(LogLevel.Trace, "In custom middleware");
+        _logger.Log(LogLevel.Trace, "Path: {path}", context.Request.Path);
 
         context.Response.Headers.Add(
             "mds-trace-id",
