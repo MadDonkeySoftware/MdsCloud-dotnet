@@ -14,7 +14,13 @@ autoformat:  ## Runs the auto formatting tool
 compile:  ## Compiles the application down to a dist folder
 	ls | egrep "*.sln$$" | xargs -I {SLN} dotnet build {SLN}
 
-dev-install:  ## Installs the app in a way that modifications to the files are run easily
+dev-cli-install:  ## Installs the mds cli in a way that each build is reflected immediately
+	@ln -s "$(shell pwd)/source/MdsCloud.CLI/bin/Debug/net7.0/MdsCloud.CLI" ~/.local/bin/mds
+
+dev-cli-uninstall:  ## Removes the mds cli that was installed via the dev-cli-install make target
+	@rm -f ~/.local/bin/mds
+
+dev-tool-install:  ## Installs the app in a way that modifications to the files are run easily
 	dotnet tool restore
 
 elk-stack-up:  ## Starts up the support / logging ELK stack
