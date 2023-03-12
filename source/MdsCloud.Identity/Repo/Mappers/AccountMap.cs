@@ -1,5 +1,6 @@
 using FluentNHibernate.Mapping;
 using MdsCloud.Identity.Domain;
+using MdsCloud.Identity.Repo.CustomTypes;
 
 namespace MdsCloud.Identity.Repo.Mappers;
 
@@ -11,7 +12,7 @@ public class AccountMap : ClassMap<Account>
         Map(a => a.Name).Column("name");
         HasMany<User>(a => a.Users);
         Map(a => a.IsActive).Column("is_active");
-        Map(a => a.Created).Column("created");
-        Map(a => a.LastActivity).Column("last_activity");
+        Map(a => a.Created).Column("created").CustomType(typeof(DateTimeAsLong));
+        Map(a => a.LastActivity).Column("last_activity").CustomType(typeof(DateTimeAsLong));
     }
 }

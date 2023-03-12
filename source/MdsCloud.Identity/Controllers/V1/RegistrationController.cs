@@ -1,6 +1,7 @@
 using MdsCloud.Identity.Domain;
 using MdsCloud.Identity.DTOs;
 using MdsCloud.Identity.DTOs.Registration;
+using MdsCloud.Identity.Extensions;
 using MdsCloud.Identity.Utils;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -70,14 +71,14 @@ public class RegistrationController : ControllerBase
         var newAccount = new Account
         {
             Name = body.AccountName,
-            Created = DateTime.Now.ToUniversalTime(),
+            Created = DateTime.UtcNow,
             IsActive = bypassActivation,
         };
         var newUser = new User
         {
             Id = body.UserId,
             Account = newAccount,
-            Created = DateTime.Now.ToUniversalTime(),
+            Created = DateTime.UtcNow,
             FriendlyName = body.FriendlyName,
             ActivationCode = RandomStringGenerator.GenerateString(32),
             IsPrimary = true,
@@ -91,7 +92,6 @@ public class RegistrationController : ControllerBase
         session.SaveOrUpdate(newAccount);
         session.SaveOrUpdate(newUser);
         transaction.Commit();
-        // _context.SaveChanges();
 
         return Ok(new { AccountId = newAccount.Id.ToString(), Status = "Success", });
     }

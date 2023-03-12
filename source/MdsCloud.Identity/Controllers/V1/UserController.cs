@@ -2,6 +2,7 @@ using MdsCloud.Identity.Authorization;
 using MdsCloud.Identity.Domain;
 using MdsCloud.Identity.DTOs;
 using MdsCloud.Identity.DTOs.User;
+using MdsCloud.Identity.Extensions;
 using MdsCloud.Identity.Utils;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -67,9 +68,10 @@ public class UserController : ControllerBase
     )
     {
         using var session = _sessionFactory.OpenSession();
+        using var transaction = session.BeginTransaction();
         var shouldUpdate = false;
         var jwt = _requestUtilities.GetRequestJwt(authorization);
-        var userId = jwt.Claims.First(c => c.Type == "UserId").Value;
+        var userId = jwt.Claims.First(c => c.Type == "userId").Value;
         var user = session.Query<User>().First(u => u.Id == userId);
 
         if (body.OldPassword != null && body.NewPassword != null)
@@ -100,7 +102,9 @@ public class UserController : ControllerBase
             return FailRequest("Found no action to perform");
         }
 
+        user.LastModified = DateTime.UtcNow;
         session.SaveOrUpdate(user);
+        transaction.Commit();
         return Ok();
     }
 }

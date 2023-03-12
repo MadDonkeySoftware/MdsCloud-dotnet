@@ -47,9 +47,9 @@ public class JwtAuthenticationHandler : AuthenticationHandler<JwtKeyAuthenticati
             var session = _sessionFactory.OpenSession();
             var jwtValidatedToken = _requestUtilities.GetRequestJwt(headerAuthorization.ToString());
 
-            var accountId = jwtValidatedToken.Claims.First(c => c.Type == "AccountId").Value;
-            var userId = jwtValidatedToken.Claims.First(c => c.Type == "UserId").Value;
-            var friendlyName = jwtValidatedToken.Claims.First(c => c.Type == "FriendlyName").Value;
+            var accountId = jwtValidatedToken.Claims.First(c => c.Type == "accountId").Value;
+            var userId = jwtValidatedToken.Claims.First(c => c.Type == "userId").Value;
+            var friendlyName = jwtValidatedToken.Claims.First(c => c.Type == "friendlyName").Value;
 
             var roles = new List<string> { Roles.User };
             var user = session.Query<User>().First(u => u.Id == userId);
@@ -83,9 +83,9 @@ public class JwtAuthenticationHandler : AuthenticationHandler<JwtKeyAuthenticati
                 {
                     Items =
                     {
-                        { "AccountId", accountId },
-                        { "UserId", userId },
-                        { "FriendlyName", friendlyName }
+                        { "accountId", accountId },
+                        { "userId", userId },
+                        { "friendlyName", friendlyName }
                     },
                     ExpiresUtc = jwtValidatedToken.ValidTo.ToUniversalTime(),
                 },

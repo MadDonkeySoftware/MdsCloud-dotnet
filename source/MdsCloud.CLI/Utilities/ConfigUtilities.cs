@@ -4,6 +4,7 @@ using Newtonsoft.Json;
 
 namespace MdsCloud.CLI.Utilities;
 
+[Obsolete] // TODO: Moved to SdkDotNet
 public class ConfigUtilities : IConfigUtilities
 {
     private readonly string _baseConfigDirectoryPath;

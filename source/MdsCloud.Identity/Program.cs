@@ -6,10 +6,12 @@ using MdsCloud.Identity.Repo;
 using MdsCloud.Identity.Utils;
 using MdsCloud.ApiCommon.Logging;
 using MdsCloud.ApiCommon.Middleware;
+using MdsCloud.Identity.Domain.Enums;
+using MdsCloud.Identity.Extensions;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using NHibernate;
 
-Task SetupSystemUser(WebApplication? app, IConfiguration config)
+Task InitializeSystemData(WebApplication? app, IConfiguration config)
 {
     if (app == null)
     {
@@ -23,22 +25,22 @@ Task SetupSystemUser(WebApplication? app, IConfiguration config)
     using var session = sessionFactory.OpenSession();
     using var transaction = session.BeginTransaction();
 
-    var existsInDb = session.Query<Account>().Any(e => e.Name == "System");
-    if (!existsInDb)
+    var systemInitialized = session.Query<Account>().Any(e => e.Name == "System");
+    if (!systemInitialized)
     {
         var envPass = Environment.GetEnvironmentVariable("MDS_SYS_PASSWORD");
         var newPass = envPass ?? RandomStringGenerator.GenerateString(32); // TODO: Check config
         var userId = config["MdsSettings:systemUser"] ?? "mdsCloud";
-        var account = new Account()
+        var account = new Account
         {
             Name = "System",
-            Created = DateTime.Now.ToUniversalTime(),
+            Created = DateTime.UtcNow,
             IsActive = true,
         };
-        var user = new User()
+        var user = new User
         {
             Id = userId,
-            Created = DateTime.Now.ToUniversalTime(),
+            Created = DateTime.Now, // TODO: Update to UTC NOW
             IsActive = true,
             IsPrimary = true,
             Email = "system@localhost",
@@ -49,18 +51,115 @@ Task SetupSystemUser(WebApplication? app, IConfiguration config)
         session.SaveOrUpdate(account);
         user.Account = account;
         session.SaveOrUpdate(user);
-        // ctx.Accounts.Add(account);
+
+        session.SaveOrUpdate(
+            new LandscapeUrl(
+                LandscapeUrlScopes.External,
+                LandscapeUrlKeys.IdentityUrl,
+                "https://127.0.0.1:8081"
+            )
+        );
+        session.SaveOrUpdate(
+            new LandscapeUrl(
+                LandscapeUrlScopes.External,
+                LandscapeUrlKeys.NsUrl,
+                "http://127.0.0.1:8082"
+            )
+        );
+        session.SaveOrUpdate(
+            new LandscapeUrl(
+                LandscapeUrlScopes.External,
+                LandscapeUrlKeys.QsUrl,
+                "http://127.0.0.1:8083"
+            )
+        );
+        session.SaveOrUpdate(
+            new LandscapeUrl(
+                LandscapeUrlScopes.External,
+                LandscapeUrlKeys.FsUrl,
+                "http://127.0.0.1:8084"
+            )
+        );
+        session.SaveOrUpdate(
+            new LandscapeUrl(
+                LandscapeUrlScopes.External,
+                LandscapeUrlKeys.SfUrl,
+                "http://127.0.0.1:8085"
+            )
+        );
+        session.SaveOrUpdate(
+            new LandscapeUrl(
+                LandscapeUrlScopes.External,
+                LandscapeUrlKeys.SmUrl,
+                "http://127.0.0.1:8086"
+            )
+        );
+        session.SaveOrUpdate(
+            new LandscapeUrl(
+                LandscapeUrlScopes.External,
+                LandscapeUrlKeys.AllowSelfSignCert,
+                true.ToString()
+            )
+        );
+
+        session.SaveOrUpdate(
+            new LandscapeUrl(
+                LandscapeUrlScopes.Internal,
+                LandscapeUrlKeys.IdentityUrl,
+                "https://mds-identity:8888"
+            )
+        );
+        session.SaveOrUpdate(
+            new LandscapeUrl(
+                LandscapeUrlScopes.Internal,
+                LandscapeUrlKeys.NsUrl,
+                "http://mds-ns:8888"
+            )
+        );
+        session.SaveOrUpdate(
+            new LandscapeUrl(
+                LandscapeUrlScopes.Internal,
+                LandscapeUrlKeys.QsUrl,
+                "http://mds-qs:8888"
+            )
+        );
+        session.SaveOrUpdate(
+            new LandscapeUrl(
+                LandscapeUrlScopes.Internal,
+                LandscapeUrlKeys.FsUrl,
+                "https://mds-fs:8888"
+            )
+        );
+        session.SaveOrUpdate(
+            new LandscapeUrl(
+                LandscapeUrlScopes.Internal,
+                LandscapeUrlKeys.SfUrl,
+                "https://mds-sf:8888"
+            )
+        );
+        session.SaveOrUpdate(
+            new LandscapeUrl(
+                LandscapeUrlScopes.Internal,
+                LandscapeUrlKeys.SmUrl,
+                "https://mds-sm:8888"
+            )
+        );
+        session.SaveOrUpdate(
+            new LandscapeUrl(
+                LandscapeUrlScopes.Internal,
+                LandscapeUrlKeys.AllowSelfSignCert,
+                true.ToString()
+            )
+        );
+
         try
         {
             transaction.Commit();
-            // ctx.SaveChanges();
             logger.Log(LogLevel.Information, "System user created");
 
             session
                 .CreateSQLQuery($"ALTER SEQUENCE Account_PK_seq RESTART WITH 1001")
                 .ExecuteUpdate();
-            // session.CreateSQLQuery($"ALTER TABLE Accounts AUTO_INCREMENT=1001").ExecuteUpdate();
-            // ctx.Database.ExecuteSql($"ALTER TABLE Accounts AUTO_INCREMENT=1001");
             if (envPass == null)
             {
                 logger.Log(
@@ -174,7 +273,7 @@ builder.Services
 
 var app = builder.Build();
 
-var sysUserSetupTask = Task.Run(() => SetupSystemUser(app, configRoot));
+var sysUserSetupTask = Task.Run(() => InitializeSystemData(app, configRoot));
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())

@@ -131,6 +131,9 @@ public class LogStashLogger : ILogger
             }
             else
             {
+                Console.WriteLine("==========================");
+                Console.WriteLine("Issue logging to logstash.");
+                Console.WriteLine("==========================");
                 throw;
             }
         }
@@ -141,7 +144,8 @@ public class LogStashLogger : ILogger
         return _getCurrentConfig().Enabled;
     }
 
-    public IDisposable? BeginScope<TState>(TState state) where TState : notnull
+    public IDisposable? BeginScope<TState>(TState state)
+        where TState : notnull
     {
         _httpClient.Dispose();
         return null;

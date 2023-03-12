@@ -33,15 +33,18 @@ format: autoformat  ## Alias to autoformat
 
 identity-keys:  ## Creates a keypair for Identity to use locally
 	echo 'foobarbaz' > pass; \
-	rm -f ./key ./key.pub ./key.pub.pem; \
+	rm -f ./key ./key.pub ./key.pub.pem ./nginx-selfsigned.crt ./nginx-selfsigned.key; \
 	ssh-keygen -f ./key -t rsa -b 4096 -m PKCS8 -n $$(cat pass) -N 'some-pass'; \
 	ssh-keygen -f ./key.pub -e -m pem > key.pub.pem; \
-	mkdir -p ./Identity/configs/keys; \
-	cp -f ./key ./Identity/configs/keys; \
-	cp -f ./key.pub ./Identity/configs/keys; \
-	cp -f ./key.pub.pem ./Identity/configs/keys; \
-	cp -f ./pass ./Identity/configs/keys; \
-	rm -f ./key ./key.pub ./key.pub.pem ./pass
+	openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout nginx-selfsigned.key -out nginx-selfsigned.crt -batch -subj /; \
+	mkdir -p ./source/MdsCloud.Identity/configs/keys ./source/MdsCloud.Identity/configs/ssh-proxy; \
+	cp -f ./key ./source/MdsCloud.Identity/configs/keys; \
+	cp -f ./key.pub ./source/MdsCloud.Identity/configs/keys; \
+	cp -f ./key.pub.pem ./source/MdsCloud.Identity/configs/keys; \
+	cp -f ./pass ./source/MdsCloud.Identity/configs/keys; \
+	cp -f ./nginx-selfsigned.crt ./source/MdsCloud.Identity/configs/ssh-proxy; \
+	cp -f ./nginx-selfsigned.key ./source/MdsCloud.Identity/configs/ssh-proxy; \
+	rm -f ./key ./key.pub ./key.pub.pem ./pass ./nginx-selfsigned.key ./nginx-selfsigned.crt
 
 help:  ## Prints this help message.
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'

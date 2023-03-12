@@ -15,8 +15,8 @@ public class InitialCreate : Migration
             .WithColumn("id").AsInt64().PrimaryKey()
             .WithColumn("name").AsString(255).NotNullable()
             .WithColumn("is_active").AsBoolean().NotNullable()
-            .WithColumn("created").AsDateTime().NotNullable()
-            .WithColumn("last_activity").AsDateTime().NotNullable();
+            .WithColumn("created").AsInt64().NotNullable()
+            .WithColumn("last_activity").AsInt64().Nullable();
 
         Create.Table("User")
             .WithColumn("id").AsString(255).PrimaryKey().NotNullable()
@@ -27,9 +27,9 @@ public class InitialCreate : Migration
             .WithColumn("is_primary").AsBoolean().NotNullable()
             .WithColumn("is_active").AsBoolean().NotNullable()
             .WithColumn("activation_code").AsString(255).Nullable()
-            .WithColumn("created").AsDateTime().NotNullable()
-            .WithColumn("last_activity").AsDateTime().NotNullable()
-            .WithColumn("last_modified").AsDateTime().NotNullable();
+            .WithColumn("created").AsInt64().NotNullable()
+            .WithColumn("last_activity").AsInt64().Nullable()
+            .WithColumn("last_modified").AsInt64().Nullable();
 
         Create.Table("LandscapeUrl")
             .WithColumn("scope").AsString(255).NotNullable()

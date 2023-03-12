@@ -47,8 +47,8 @@ public class ImpersonationController : MdsControllerBase
             "Could not find account, user, or insufficient privilege to impersonate";
         using var session = SessionFactory.OpenSession();
         var jwt = RequestUtilities.GetRequestJwt(authorization);
-        var accountId = jwt.Claims.First(c => c.Type == "AccountId").Value;
-        var userId = jwt.Claims.First(c => c.Type == "UserId").Value;
+        var accountId = jwt.Claims.First(c => c.Type == "accountId").Value;
+        var userId = jwt.Claims.First(c => c.Type == "userId").Value;
         long impersonatorAccountId = long.TryParse(accountId, out impersonatorAccountId)
             ? impersonatorAccountId
             : -1;
@@ -117,11 +117,11 @@ public class ImpersonationController : MdsControllerBase
                 issuer: Configuration["MdsSettings:JwtSettings:Issuer"],
                 claims: new Claim[]
                 {
-                    new("AccountId", account.Id.ToString()),
-                    new("UserId", user.Id),
-                    new("FriendlyName", user.FriendlyName),
-                    new("ImpersonatedBy", userId),
-                    new("ImpersonatingFrom", accountId),
+                    new("accountId", account.Id.ToString()),
+                    new("userId", user.Id),
+                    new("friendlyName", user.FriendlyName),
+                    new("impersonatedBy", userId),
+                    new("impersonatingFrom", accountId),
                 },
                 notBefore: utcNow,
                 issuedAt: utcNow,

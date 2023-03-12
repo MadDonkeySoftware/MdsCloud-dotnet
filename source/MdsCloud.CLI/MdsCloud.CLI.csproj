@@ -24,4 +24,8 @@
       </Reference>
     </ItemGroup>
 
+    <ItemGroup>
+      <ProjectReference Include="..\MdsCloud.SdkDotNet\MdsCloud.SdkDotNet.csproj" />
+    </ItemGroup>
+
 </Project>

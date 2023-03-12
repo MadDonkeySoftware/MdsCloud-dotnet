@@ -4,6 +4,7 @@ using System.Security.Cryptography;
 using MdsCloud.Identity.Domain;
 using MdsCloud.Identity.DTOs;
 using MdsCloud.Identity.DTOs.Authentication;
+using MdsCloud.Identity.Extensions;
 using MdsCloud.Identity.Utils;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -70,6 +71,7 @@ public class AuthenticationController : ControllerBase
     public IActionResult Post([FromBody] AuthenticationRequestBody body)
     {
         using var session = _sessionFactory.OpenSession();
+        using var transaction = session.BeginTransaction();
         long parsedAccountId = long.TryParse(body.AccountId, out parsedAccountId)
             ? parsedAccountId
             : 0;
@@ -131,15 +133,19 @@ public class AuthenticationController : ControllerBase
                 issuer: _configuration["MdsSettings:JwtSettings:Issuer"],
                 claims: new Claim[]
                 {
-                    new("AccountId", account.Id.ToString()),
-                    new("UserId", user.Id),
-                    new("FriendlyName", user.FriendlyName),
+                    new("accountId", account.Id.ToString()),
+                    new("userId", user.Id),
+                    new("friendlyName", user.FriendlyName),
                 },
                 notBefore: utcNow,
                 issuedAt: utcNow,
                 expires: utcNow.AddMinutes(parsedLifespanMinutes)
             )
         );
+        user.LastActivity = DateTime.UtcNow;
+        session.SaveOrUpdate(user);
+        transaction.Commit();
+
         return Ok(new { Token = new JwtSecurityTokenHandler().WriteToken(tokenDescriptor) });
     }
 }

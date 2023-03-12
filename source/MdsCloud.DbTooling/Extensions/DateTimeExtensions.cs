@@ -1,4 +1,4 @@
-namespace Identity.Extensions;
+namespace MdsCloud.DbTooling.Extensions;
 
 public static class DateTimeExtensions
 {

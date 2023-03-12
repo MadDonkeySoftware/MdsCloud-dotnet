@@ -20,7 +20,7 @@ public class RequestUtilities : IRequestUtilities
 
     public JwtSecurityToken GetRequestJwt(string authorizationHeader)
     {
-        const string prefix = "bearer: ";
+        const string prefix = "bearer ";
         var standardizedAuthHeader = authorizationHeader.ToLowerInvariant().StartsWith(prefix)
             ? authorizationHeader.Substring(prefix.Length)
             : authorizationHeader;

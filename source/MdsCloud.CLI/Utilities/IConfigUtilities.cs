@@ -2,6 +2,7 @@ using MdsCloud.CLI.Domain;
 
 namespace MdsCloud.CLI.Utilities;
 
+[Obsolete] // TODO: Moved to SdkDotNet
 public interface IConfigUtilities
 {
     string GetDefaultEnvironment();

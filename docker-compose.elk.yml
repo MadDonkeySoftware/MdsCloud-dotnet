@@ -20,7 +20,7 @@ services:
       - ./docker-compose-support-files/setup/entrypoint.sh:/entrypoint.sh:ro,Z
       - ./docker-compose-support-files/setup/lib.sh:/lib.sh:ro,Z
       - ./docker-compose-support-files/setup/roles:/roles:ro,Z
-      - /docker-compose-support-files/setup:/state:Z
+      - ./docker-compose-support-files/setup:/state:Z
     environment:
       ELASTIC_PASSWORD: ${ELASTIC_PASSWORD:-changeme}
       LOGSTASH_INTERNAL_PASSWORD: ${LOGSTASH_INTERNAL_PASSWORD:-changeme}

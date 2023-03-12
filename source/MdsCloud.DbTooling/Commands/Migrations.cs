@@ -3,7 +3,7 @@ using System.Reflection;
 using CommandDotNet;
 using FluentMigrator.Runner;
 using FluentMigrator.Runner.Initialization;
-using Identity.Extensions;
+using MdsCloud.DbTooling.Extensions;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Scriban;

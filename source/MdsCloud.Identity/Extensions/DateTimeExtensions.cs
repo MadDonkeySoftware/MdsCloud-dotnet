@@ -8,10 +8,10 @@ public static class DateTimeExtensions
         return origin.AddSeconds(timestamp);
     }
 
-    public static double ToUnixTimestamp(this DateTime dateTime)
+    public static long ToUnixTimestamp(this DateTime dateTime)
     {
         var origin = new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc);
         var diff = dateTime.ToUniversalTime() - origin;
-        return Math.Floor(diff.TotalSeconds);
+        return (long)Math.Floor(diff.TotalSeconds);
     }
 }
