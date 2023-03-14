@@ -1,7 +1,7 @@
 using CommandDotNet;
 using MdsCloud.CLI.Attributes;
 using MdsCloud.CLI.Domain;
-using MdsCloud.CLI.Utilities;
+using MdsCloud.SdkDotNet.Utils;
 using Spectre.Console;
 
 namespace MdsCloud.CLI.Commands;

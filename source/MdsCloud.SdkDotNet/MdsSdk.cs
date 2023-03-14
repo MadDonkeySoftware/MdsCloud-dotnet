@@ -106,6 +106,11 @@ public class MdsSdk
         return _authManager;
     }
 
+    internal static Task DirectoryInitialize()
+    {
+        return _utilities.ConfigUtilities.EnsureBaseConfigDirectoryExists();
+    }
+
     public static void Initialize()
     {
         var env = _utilities.ConfigUtilities.GetDefaultEnvironment();
@@ -143,6 +148,7 @@ public class MdsSdk
     public static async void Initialize(SdkInitializeOptions args)
     {
         _authManager = null;
+        DirectoryInitialize();
         var configData = new SdkInitializeOptions();
 
         if (!args.AllUrlsPopulated())

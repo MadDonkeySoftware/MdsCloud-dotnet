@@ -12,7 +12,7 @@ autoformat:  ## Runs the auto formatting tool
 	dotnet csharpier .
 
 compile:  ## Compiles the application down to a dist folder
-	ls | egrep "*.sln$$" | xargs -I {SLN} dotnet build {SLN}
+	ls | egrep "*.sln$$" | xargs -I {SLN} dotnet build {SLN} --force --no-incremental
 
 dev-cli-install:  ## Installs the mds cli in a way that each build is reflected immediately
 	@ln -s "$(shell pwd)/source/MdsCloud.CLI/bin/Debug/net7.0/MdsCloud.CLI" ~/.local/bin/mds

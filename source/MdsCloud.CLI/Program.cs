@@ -8,7 +8,7 @@ using CommandDotNet.Help;
 using CommandDotNet.IoC.Autofac;
 using MadDonkeySoftware.SystemWrappers.Runtime;
 using MdsCloud.CLI.Commands;
-using MdsCloud.CLI.Utilities;
+using MdsCloud.SdkDotNet.Utils;
 using Spectre.Console;
 
 namespace MdsCloud.CLI;
@@ -22,6 +22,7 @@ public class Program
         // Commands / Sub-Commands
         ioc.RegisterType<Config>();
         ioc.RegisterType<Identity>();
+        ioc.RegisterType<CloudInABox>();
 
         // Utilities
         ioc.RegisterType<ConfigUtilities>().As<IConfigUtilities>().SingleInstance();
@@ -112,4 +113,7 @@ public class Program
 
     [Subcommand(RenameAs = "id")]
     public Commands.Identity? Identity { get; set; }
+
+    [Subcommand(RenameAs = "stack")]
+    public Commands.CloudInABox? CloudInABox { get; set; }
 }

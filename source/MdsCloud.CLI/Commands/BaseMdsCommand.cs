@@ -1,4 +1,4 @@
-using MdsCloud.CLI.Utilities;
+using MdsCloud.SdkDotNet.Utils;
 using Spectre.Console;
 
 namespace MdsCloud.CLI.Commands;

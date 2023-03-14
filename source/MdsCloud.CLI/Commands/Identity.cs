@@ -1,7 +1,7 @@
 using CommandDotNet;
-using MdsCloud.CLI.Utilities;
 using MdsCloud.SdkDotNet;
 using MdsCloud.SdkDotNet.DTOs.Identity;
+using MdsCloud.SdkDotNet.Utils;
 using Spectre.Console;
 
 namespace MdsCloud.CLI.Commands;
@@ -158,6 +158,7 @@ public class Identity : BaseMdsCommand
         catch (Exception ex)
         {
             // TODO: implement
+            Console.WriteLine(ex.Message);
         }
 
         if (password.HasValue && password.Value)
