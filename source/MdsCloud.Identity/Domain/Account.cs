@@ -1,5 +1,3 @@
-using MdsCloud.Identity.Repo.CustomTypes;
-
 #pragma warning disable CS8618
 namespace MdsCloud.Identity.Domain;
 

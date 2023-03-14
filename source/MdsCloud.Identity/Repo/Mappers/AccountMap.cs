@@ -1,6 +1,6 @@
 using FluentNHibernate.Mapping;
+using MdsCloud.Common.NHibernate.Types;
 using MdsCloud.Identity.Domain;
-using MdsCloud.Identity.Repo.CustomTypes;
 
 namespace MdsCloud.Identity.Repo.Mappers;
 

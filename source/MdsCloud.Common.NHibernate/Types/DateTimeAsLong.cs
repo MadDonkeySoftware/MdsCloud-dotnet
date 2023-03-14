@@ -5,7 +5,7 @@ using NHibernate.Engine;
 using NHibernate.SqlTypes;
 using NHibernate.UserTypes;
 
-namespace MdsCloud.Identity.Repo.CustomTypes;
+namespace MdsCloud.Common.NHibernate.Types;
 
 public class DateTimeAsLong : IUserType
 {
