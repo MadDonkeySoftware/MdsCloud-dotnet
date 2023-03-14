@@ -42,7 +42,6 @@ public class IdentityServiceClient
                     Encoding.UTF8,
                     "application/json"
                 ),
-                AuthManager = this.AuthManager,
             }
         );
 

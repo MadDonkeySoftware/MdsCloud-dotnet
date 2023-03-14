@@ -43,7 +43,7 @@ public class RegistrationController : ControllerBase
         Summary = "New account registration",
         Tags = new[] { "Registration" }
     )]
-    public IActionResult Get([FromBody] RegistrationRequestBody body)
+    public IActionResult Register([FromBody] RegistrationRequestBody body)
     {
         using var session = _sessionFactory.OpenSession();
         using var transaction = session.BeginTransaction();
