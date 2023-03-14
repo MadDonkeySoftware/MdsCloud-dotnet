@@ -1,6 +1,5 @@
 using System.Security.Cryptography;
 using System.Text;
-using NuGet.Packaging;
 
 namespace MdsCloud.Identity.Utils;
 

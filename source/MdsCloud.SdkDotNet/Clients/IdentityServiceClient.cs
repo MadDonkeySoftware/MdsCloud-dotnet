@@ -28,9 +28,31 @@ public class IdentityServiceClient
         RequestFactory = new SdkHttpRequestFactory();
     }
 
-    public void Register()
+    public async Task<RegistrationResponse?> Register(RegisterRequest args)
     {
-        throw new NotImplementedException();
+        var url = Flurl.Url.Combine(this.ServiceUrl, "v1", "register");
+        var response = await RequestFactory.MakeRequest(
+            new CreateRequestArgs
+            {
+                AllowSelfSignCert = this.AllowSelfSignCert,
+                HttpMethod = HttpMethod.Post,
+                Url = url,
+                Content = new StringContent(
+                    JsonConvert.SerializeObject(args),
+                    Encoding.UTF8,
+                    "application/json"
+                ),
+                AuthManager = this.AuthManager,
+            }
+        );
+
+        if (response.StatusCode != HttpStatusCode.OK)
+        {
+            throw new Exception("An error occurred while updating the user");
+        }
+
+        var responseBody = await response.Content.ReadAsStringAsync();
+        return JsonConvert.DeserializeObject<RegistrationResponse>(responseBody);
     }
 
     public Task<string> Authenticate()

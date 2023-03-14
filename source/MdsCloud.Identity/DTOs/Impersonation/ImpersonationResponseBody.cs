@@ -1,4 +1,4 @@
-using Microsoft.Build.Framework;
+using System.ComponentModel.DataAnnotations;
 using Swashbuckle.AspNetCore.Annotations;
 
 #pragma warning disable CS8618

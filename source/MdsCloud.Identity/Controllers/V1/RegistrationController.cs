@@ -79,7 +79,7 @@ public class RegistrationController : ControllerBase
             Account = newAccount,
             Created = DateTime.UtcNow,
             FriendlyName = body.FriendlyName,
-            ActivationCode = RandomStringGenerator.GenerateString(32),
+            ActivationCode = bypassActivation ? null : RandomStringGenerator.GenerateString(32),
             IsPrimary = true,
             Email = body.Email,
             Password = PasswordHasher.Hash(body.Password),
