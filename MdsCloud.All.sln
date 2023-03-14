@@ -5,8 +5,6 @@ VisualStudioVersion = 17.0.31903.59
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MdsCloud.SdkDotNet", "source\MdsCloud.SdkDotNet\MdsCloud.SdkDotNet.csproj", "{4DA0722B-C5D3-4C32-89EB-63A09869BE63}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MdsCloud.ApiCommon", "source\MdsCloud.ApiCommon\MdsCloud.ApiCommon.csproj", "{1F1513F2-7C6C-423E-AE7F-4913C76ADD6D}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MdsCloud.CLI", "source\MdsCloud.CLI\MdsCloud.CLI.csproj", "{502C208E-0CEA-4503-A2F6-4A8ABD92B25B}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MdsCloud.DbTooling", "source\MdsCloud.DbTooling\MdsCloud.DbTooling.csproj", "{AF801CAC-A1C5-4085-B70F-52EC2FE2513C}"
@@ -16,6 +14,8 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MdsCloud.Identity.Test", "source\MdsCloud.Identity.Test\MdsCloud.Identity.Test.csproj", "{05FF078D-58C0-475E-B58A-3FDEE68CEA1E}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MdsCloud.SdkDotNet.Test", "source\MdsCloud.SdkDotNet.Test\MdsCloud.SdkDotNet.Test.csproj", "{F5727B8C-4C0C-41A8-BC73-2D324F9D9C40}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MdsCloud.Common.API", "source\MdsCloud.Common.API\MdsCloud.Common.API.csproj", "{D28EEC21-D995-4239-8576-234F0F1BC1D4}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -30,10 +30,6 @@ Global
 		{4DA0722B-C5D3-4C32-89EB-63A09869BE63}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{4DA0722B-C5D3-4C32-89EB-63A09869BE63}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{4DA0722B-C5D3-4C32-89EB-63A09869BE63}.Release|Any CPU.Build.0 = Release|Any CPU
-		{1F1513F2-7C6C-423E-AE7F-4913C76ADD6D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{1F1513F2-7C6C-423E-AE7F-4913C76ADD6D}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{1F1513F2-7C6C-423E-AE7F-4913C76ADD6D}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{1F1513F2-7C6C-423E-AE7F-4913C76ADD6D}.Release|Any CPU.Build.0 = Release|Any CPU
 		{502C208E-0CEA-4503-A2F6-4A8ABD92B25B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{502C208E-0CEA-4503-A2F6-4A8ABD92B25B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{502C208E-0CEA-4503-A2F6-4A8ABD92B25B}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -54,5 +50,9 @@ Global
 		{F5727B8C-4C0C-41A8-BC73-2D324F9D9C40}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{F5727B8C-4C0C-41A8-BC73-2D324F9D9C40}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{F5727B8C-4C0C-41A8-BC73-2D324F9D9C40}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D28EEC21-D995-4239-8576-234F0F1BC1D4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D28EEC21-D995-4239-8576-234F0F1BC1D4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D28EEC21-D995-4239-8576-234F0F1BC1D4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D28EEC21-D995-4239-8576-234F0F1BC1D4}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

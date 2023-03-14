@@ -3,7 +3,7 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Configuration;
 
-namespace MdsCloud.ApiCommon.Logging;
+namespace MdsCloud.Common.API.Logging;
 
 public static class MdsLoggerExtensions
 {

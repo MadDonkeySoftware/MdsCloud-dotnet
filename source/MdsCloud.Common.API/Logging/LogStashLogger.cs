@@ -4,7 +4,7 @@ using System.Net.Http.Headers;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 
-namespace MdsCloud.ApiCommon.Logging;
+namespace MdsCloud.Common.API.Logging;
 
 // TODO: pid, hostname, name,
 internal class LogstashPayload

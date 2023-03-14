@@ -2,7 +2,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 
-namespace MdsCloud.ApiCommon.Middleware;
+namespace MdsCloud.Common.API.Middleware;
 
 public class CrossSystemTraceIdMiddleware
 {

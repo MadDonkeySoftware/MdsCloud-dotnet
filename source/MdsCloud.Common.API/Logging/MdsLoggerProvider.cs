@@ -3,7 +3,7 @@ using System.Runtime.Versioning;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
-namespace MdsCloud.ApiCommon.Logging;
+namespace MdsCloud.Common.API.Logging;
 
 [UnsupportedOSPlatform("browser")]
 [ProviderAlias("MdsLogger")]

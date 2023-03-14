@@ -4,10 +4,9 @@ using MdsCloud.Identity.Authorization;
 using MdsCloud.Identity.Domain;
 using MdsCloud.Identity.Repo;
 using MdsCloud.Identity.Utils;
-using MdsCloud.ApiCommon.Logging;
-using MdsCloud.ApiCommon.Middleware;
+using MdsCloud.Common.API.Logging;
+using MdsCloud.Common.API.Middleware;
 using MdsCloud.Identity.Domain.Enums;
-using MdsCloud.Identity.Extensions;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using NHibernate;
 

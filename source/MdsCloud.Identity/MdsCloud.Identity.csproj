@@ -45,7 +45,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\MdsCloud.ApiCommon\MdsCloud.ApiCommon.csproj" />
+    <ProjectReference Include="..\MdsCloud.Common.API\MdsCloud.Common.API.csproj" />
   </ItemGroup>
 
 </Project>

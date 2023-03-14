@@ -4,7 +4,6 @@ using System.Security.Cryptography;
 using MdsCloud.Identity.Domain;
 using MdsCloud.Identity.DTOs;
 using MdsCloud.Identity.DTOs.Authentication;
-using MdsCloud.Identity.Extensions;
 using MdsCloud.Identity.Utils;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;

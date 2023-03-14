@@ -1,4 +1,4 @@
-namespace MdsCloud.ApiCommon.Logging;
+namespace MdsCloud.Common.API.Logging;
 
 public sealed class MdsLoggerConfiguration
 {

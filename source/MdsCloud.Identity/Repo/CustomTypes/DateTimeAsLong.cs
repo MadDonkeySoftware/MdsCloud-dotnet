@@ -52,7 +52,7 @@ public class DateTimeAsLong : IUserType
             return false;
         if (x == null && y == null)
             return true;
-        return x.Equals(y);
+        return x!.Equals(y);
     }
 
     public int GetHashCode(object? x)
