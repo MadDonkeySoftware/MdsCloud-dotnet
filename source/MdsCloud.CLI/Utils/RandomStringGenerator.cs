@@ -1,6 +1,6 @@
 using System.Security.Cryptography;
 
-namespace MdsCloud.Identity.Utils;
+namespace MdsCloud.CLI.Utils;
 
 public static class RandomStringGenerator
 {

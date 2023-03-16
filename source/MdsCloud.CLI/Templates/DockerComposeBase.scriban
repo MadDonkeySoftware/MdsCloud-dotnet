@@ -1,0 +1,27 @@
+version: '3.2'
+
+services:
+
+  postgres:
+    image: 'postgres:latest'
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: pwd4postgres
+    ports:
+      - 5432:5432
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - {{base_config_dir}}/postgres/db-init.sql:/docker-entrypoint-initdb.d/db-init.sql:ro
+    networks:
+      - app
+
+{{identity}}
+
+networks:
+  app:
+
+volumes:
+  postgres-data:
+  elasticsearch:
+  file-service-data:

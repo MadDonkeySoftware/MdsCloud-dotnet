@@ -1,0 +1,24 @@
+  proxy:
+    image: nginx
+    restart: always
+    extra_hosts:
+      - host.docker.internal:host-gateway # Loop back to the host machine for testing :-)
+    ports:
+      - 8079:80 # HACK TODO NOTE: It is best to not include this in a non-local-development environment.
+      - 8081:443
+    volumes:
+      - {{base_config_dir}}/identity/proxy/nginx.conf:/etc/nginx/nginx.conf:ro
+      - {{base_config_dir}}/identity/proxy/nginx-selfsigned.crt:/etc/nginx/nginx-selfsigned.crt:ro
+      - {{base_config_dir}}/identity/proxy/nginx-selfsigned.key:/etc/nginx/nginx-selfsigned.key:ro
+    networks:
+      - app
+
+  mds-identity-db-setup:
+    image: {{mds_db_tooling_image}}
+    volumes:
+      - {{base_config_dir}}/dbTooling/appsettings.json:/app/appsettings.Production.json:ro
+    depends_on:
+      - postgres
+    networks:
+      - app
+    command: dotnet MdsCloud.DbTooling.dll migrations run --delay 5 Identity

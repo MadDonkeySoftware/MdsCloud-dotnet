@@ -1,51 +1,97 @@
 #pragma warning disable CS8618
 using MdsCloud.CLI.Attributes;
-using Newtonsoft.Json;
+using MdsCloud.SdkDotNet.Domain;
 
 namespace MdsCloud.CLI.Domain;
 
-public class MdsCliConfiguration
+public class MdsCliConfiguration : EnvironmentConfiguration
 {
-    [JsonProperty("account")]
-    [ConfigElementDisplaySettings(Key = "account", Prompt = "Account")]
-    public string AccountId { get; set; }
+    private readonly EnvironmentConfiguration _environmentConfiguration;
 
-    [JsonProperty("userId")]
-    [ConfigElementDisplaySettings(Key = "userId", Prompt = "User Id")]
-    public string UserId { get; set; }
+    public MdsCliConfiguration()
+        : this(new EnvironmentConfiguration()) { }
 
-    [JsonProperty("password")]
-    [ConfigElementDisplaySettings(Key = "password", Prompt = "Password", HideValue = true)]
-    public string Password { get; set; }
+    public MdsCliConfiguration(EnvironmentConfiguration config)
+    {
+        _environmentConfiguration = config;
+    }
 
-    [JsonProperty("identityUrl")]
-    [ConfigElementDisplaySettings(Key = "identityUrl", Prompt = "MdsCloud.Identity Service Url")]
-    public string IdentityUrl { get; set; }
+    [ConfigElementDisplaySettings(Key = "account", DisplayPrompt = "Account")]
+    public override string? AccountId
+    {
+        get => _environmentConfiguration.AccountId;
+        set => _environmentConfiguration.AccountId = value;
+    }
 
-    [JsonProperty("nsUrl")]
-    [ConfigElementDisplaySettings(Key = "nsUrl", Prompt = "Notification Service Url")]
-    public string NotificationServiceUrl { get; set; }
+    [ConfigElementDisplaySettings(Key = "userId", DisplayPrompt = "User Id")]
+    public override string? UserId
+    {
+        get => _environmentConfiguration.UserId;
+        set => _environmentConfiguration.UserId = value;
+    }
 
-    [JsonProperty("qsUrl")]
-    [ConfigElementDisplaySettings(Key = "qsUrl", Prompt = "Queue Service Url")]
-    public string QueueServiceUrl { get; set; }
+    [ConfigElementDisplaySettings(Key = "password", DisplayPrompt = "Password", HideValue = true)]
+    public override string? Password
+    {
+        get => _environmentConfiguration.Password;
+        set => _environmentConfiguration.Password = value;
+    }
 
-    [JsonProperty("fsUrl")]
-    [ConfigElementDisplaySettings(Key = "fsUrl", Prompt = "File Service Url")]
-    public string FileServiceUrl { get; set; }
+    [ConfigElementDisplaySettings(
+        Key = "identityUrl",
+        DisplayPrompt = "MdsCloud.Identity Service Url"
+    )]
+    public override string? IdentityUrl
+    {
+        get => _environmentConfiguration.IdentityUrl;
+        set => _environmentConfiguration.IdentityUrl = value;
+    }
 
-    [JsonProperty("sfUrl")]
-    [ConfigElementDisplaySettings(Key = "sfUrl", Prompt = "Serverless Functions Service Url")]
-    public string ServerlessFunctionsServiceUrl { get; set; }
+    [ConfigElementDisplaySettings(Key = "nsUrl", DisplayPrompt = "Notification Service Url")]
+    public override string? NotificationServiceUrl
+    {
+        get => _environmentConfiguration.NotificationServiceUrl;
+        set => _environmentConfiguration.NotificationServiceUrl = value;
+    }
 
-    [JsonProperty("smUrl")]
-    [ConfigElementDisplaySettings(Key = "smUrl", Prompt = "State Machine Service Url")]
-    public string StateMachineServiceUrl { get; set; }
+    [ConfigElementDisplaySettings(Key = "qsUrl", DisplayPrompt = "Queue Service Url")]
+    public override string? QueueServiceUrl
+    {
+        get => _environmentConfiguration.QueueServiceUrl;
+        set => _environmentConfiguration.QueueServiceUrl = value;
+    }
 
-    [JsonProperty("allowSelfSignCert")]
+    [ConfigElementDisplaySettings(Key = "fsUrl", DisplayPrompt = "File Service Url")]
+    public override string? FileServiceUrl
+    {
+        get => _environmentConfiguration.FileServiceUrl;
+        set => _environmentConfiguration.FileServiceUrl = value;
+    }
+
+    [ConfigElementDisplaySettings(
+        Key = "sfUrl",
+        DisplayPrompt = "Serverless Functions Service Url"
+    )]
+    public override string? ServerlessFunctionsServiceUrl
+    {
+        get => _environmentConfiguration.ServerlessFunctionsServiceUrl;
+        set => _environmentConfiguration.ServerlessFunctionsServiceUrl = value;
+    }
+
+    [ConfigElementDisplaySettings(Key = "smUrl", DisplayPrompt = "State Machine Service Url")]
+    public override string? StateMachineServiceUrl
+    {
+        get => _environmentConfiguration.StateMachineServiceUrl;
+        set => _environmentConfiguration.StateMachineServiceUrl = value;
+    }
+
     [ConfigElementDisplaySettings(
         Key = "allowSelfSignCert",
-        Prompt = "Allow self-signed Certificates"
+        DisplayPrompt = "Allow self-signed Certificates"
     )]
-    public bool AllowSelfSignCertificate { get; set; }
+    public override bool? AllowSelfSignCertificate
+    {
+        get => _environmentConfiguration.AllowSelfSignCertificate;
+        set => _environmentConfiguration.AllowSelfSignCertificate = value;
+    }
 }

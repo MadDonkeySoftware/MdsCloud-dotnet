@@ -8,6 +8,7 @@ using CommandDotNet.Help;
 using CommandDotNet.IoC.Autofac;
 using MadDonkeySoftware.SystemWrappers.Runtime;
 using MdsCloud.CLI.Commands;
+using MdsCloud.CLI.Utils;
 using MdsCloud.SdkDotNet.Utils;
 using Spectre.Console;
 
@@ -20,12 +21,14 @@ public class Program
         var ioc = new ContainerBuilder();
 
         // Commands / Sub-Commands
-        ioc.RegisterType<Config>();
+        ioc.RegisterType<CliConfig>();
         ioc.RegisterType<Identity>();
-        ioc.RegisterType<CloudInABox>();
+        ioc.RegisterType<Commands.Stack>();
 
         // Utilities
-        ioc.RegisterType<ConfigUtilities>().As<IConfigUtilities>().SingleInstance();
+        ioc.Register(ctx => new CliConfigUtilities(new ConfigUtilities(new EnvironmentWrapper())))
+            .As<IConfigUtilities>()
+            .SingleInstance();
 
         // Spectre.Console
         ioc.Register(
@@ -109,11 +112,11 @@ public class Program
     }
 
     [Subcommand(RenameAs = "config")]
-    public Commands.Config? Config { get; set; }
+    public Commands.CliConfig? Config { get; set; }
 
     [Subcommand(RenameAs = "id")]
     public Commands.Identity? Identity { get; set; }
 
     [Subcommand(RenameAs = "stack")]
-    public Commands.CloudInABox? CloudInABox { get; set; }
+    public Commands.Stack? CloudInABox { get; set; }
 }

@@ -289,4 +289,4 @@ __pycache__/
 *.xsd.cs
 
 # Omit local developer settings file
-appsettings.Development.json
+appsettings.*.json

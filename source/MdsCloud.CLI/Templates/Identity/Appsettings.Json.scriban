@@ -1,0 +1,22 @@
+{
+  "Logging": {
+    "LogLevel": {
+      "Default": "Information",
+      "Microsoft.AspNetCore": "Warning"
+    }
+  },
+  "DeveloperSettings": {
+    "ShowSql": {{dev_setting_show_sql}}
+  },
+  "ConnectionStrings": {
+    "DBConnection": "{{connection_string}}"
+  },
+  "MdsSettings": {
+    "Secrets": {
+      "PrivatePath": "{{key_private_path}}",
+      "PrivatePassword": "{{key_password}}",
+      "PublicPath": "{{key_public_path}}"
+    },
+    "BypassUserActivation": true
+  }
+}

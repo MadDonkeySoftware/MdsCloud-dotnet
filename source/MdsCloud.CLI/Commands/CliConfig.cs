@@ -6,9 +6,9 @@ using Spectre.Console;
 
 namespace MdsCloud.CLI.Commands;
 
-public class Config : BaseMdsCommand
+public class CliConfig : BaseMdsCommand
 {
-    public Config(IConfigUtilities configUtilities, IAnsiConsole console)
+    public CliConfig(IConfigUtilities configUtilities, IAnsiConsole console)
         : base(configUtilities, console) { }
 
     private void ShowConfigKeys()
@@ -59,7 +59,7 @@ public class Config : BaseMdsCommand
                         displayValue = castAttribute.HideValue
                             ? "***"
                             : propertyInfo.GetValue(config)?.ToString() ?? "";
-                        displayPrompt = castAttribute.Prompt;
+                        displayPrompt = castAttribute.DisplayPrompt;
                     }
                 }
                 table.AddRow(displayPrompt, displayValue);

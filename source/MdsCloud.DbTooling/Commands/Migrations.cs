@@ -16,8 +16,12 @@ public class Migrations
     {
         var configRoot = new ConfigurationBuilder()
             .AddJsonFile("appsettings.json", false, true)
+            .AddJsonFile("appsettings.Development.json", true, true)
+            .AddJsonFile("appsettings.Production.json", true, true)
             .Build();
         var connString = configRoot[$"databases:{scope}:connString"];
+
+        Console.WriteLine($"ConnString: {connString}");
 
         return new ServiceCollection()
             .AddFluentMigratorCore()
@@ -30,18 +34,44 @@ public class Migrations
                         .For.Migrations()
             )
             .AddLogging(config => config.AddFluentMigratorConsole())
-            .Configure<RunnerOptions>(conf => conf.Tags = new[] { "MdsCloud.Identity" })
+            .Configure<RunnerOptions>(conf => conf.Tags = new[] { scope })
             .BuildServiceProvider(false);
     }
 
-    [Command("run")]
-    public void Run(string system)
+    private void RunMigrations(string system, int attempts = 0)
     {
-        using var serviceProvider = CreateServices(system);
-        using var scope = serviceProvider.CreateScope();
+        try
+        {
+            using var serviceProvider = CreateServices(system);
+            using var scope = serviceProvider.CreateScope();
 
-        var runner = serviceProvider.GetRequiredService<IMigrationRunner>();
-        runner.MigrateUp();
+            var runner = serviceProvider.GetRequiredService<IMigrationRunner>();
+            runner.MigrateUp();
+        }
+        catch (Exception)
+        {
+            if (attempts >= 5)
+                throw;
+
+            Thread.Sleep((int)Math.Pow(2, attempts) * 1000);
+            RunMigrations(system, attempts + 1);
+        }
+    }
+
+    [Command("run")]
+    public void Run(string system, [Option("delay")] int delay = 0)
+    {
+        if (delay > 0)
+        {
+            // NOTE: Due to an issue in FluentMigrator if the database is not fully ready for
+            // migrations to be run the process will exit w/o an exceptions or any indication that migrations
+            // were not run.
+            Console.WriteLine($"Sleeping for {delay} seconds before attempting migrations");
+            Thread.Sleep(delay * 1000);
+        }
+        Console.WriteLine($"Running migrations for {system}");
+        RunMigrations(system);
+        Console.WriteLine($"Migrations for {system} have completed");
     }
 
     [Command("create")]

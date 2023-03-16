@@ -2,7 +2,7 @@ using FluentMigrator;
 
 namespace MdsCloud.DbTooling.Migrations.Identity;
 
-[Tags("MdsCloud.Identity")]
+[Tags("Identity")]
 [Tags("Production", "Development")]
 [Migration(1676825127, "Initial implementation of the database schema")]
 public class InitialCreate : Migration

@@ -1,0 +1,7 @@
+{
+  "databases": {
+    "identity": {
+      "connString": "Server=postgres;Port=5432;Database=identity;User Id=postgres;Password=pwd4postgres;"
+    }
+  }
+}
