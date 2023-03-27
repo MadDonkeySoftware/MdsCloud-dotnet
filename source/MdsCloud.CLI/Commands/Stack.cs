@@ -125,7 +125,7 @@ public class Stack : BaseMdsCommand
 
     private static string ToSpectreConsoleSafeString(string message)
     {
-        return message.Replace("[", "[[").Replace("]", "]]");
+        return Spectre.Console.Markup.Escape(message);
     }
 
     [Command("init")]
@@ -279,12 +279,14 @@ public class Stack : BaseMdsCommand
                 {
                     void BuilderStatusUpdateHandler(object? _, string message)
                     {
-                        context.Status(ToSpectreConsoleSafeString(message));
+                        if (!string.IsNullOrEmpty(message))
+                            context.Status(ToSpectreConsoleSafeString(message));
                     }
 
                     void BuilderMilestoneAchieved(object? _, string message)
                     {
-                        this.AnsiConsole.MarkupLine(ToSpectreConsoleSafeString(message));
+                        if (!string.IsNullOrEmpty(message))
+                            this.AnsiConsole.MarkupLine(ToSpectreConsoleSafeString(message));
                     }
 
                     try
@@ -294,12 +296,41 @@ public class Stack : BaseMdsCommand
                         manager.OnStatusUpdate += BuilderStatusUpdateHandler;
                         manager.Configure(settings, config);
                     }
-                    catch (Exception)
+                    catch (Exception ex)
                     {
-                        this.AnsiConsole.Markup(
+                        this.AnsiConsole.MarkupLine(
                             "[red]One or more child processes failed. See logs[/]"
                         );
-                        this.AnsiConsole.Markup(Path.Join(BaseStackConfigDirectory, "logs"));
+                        this.AnsiConsole.MarkupLine(Path.Join(BaseStackConfigDirectory, "logs"));
+
+                        if (ex.Message.StartsWith("Embedded resource missing:"))
+                        {
+                            var message = string.Join(
+                                Environment.NewLine,
+                                new List<string?>
+                                {
+                                    string.Join(
+                                        Environment.NewLine,
+                                        System.Reflection.Assembly
+                                            .GetExecutingAssembly()
+                                            .GetManifestResourceNames()
+                                    ),
+                                    string.Empty,
+                                    ex.Message
+                                }
+                            );
+                            File.WriteAllText(
+                                Path.Join(BaseStackConfigDirectory, "logs", "error.log"),
+                                message
+                            );
+                        }
+                        else
+                        {
+                            File.WriteAllText(
+                                Path.Join(BaseStackConfigDirectory, "logs", "error.log"),
+                                ex.Message
+                            );
+                        }
                     }
                 }
             );
@@ -369,7 +400,7 @@ public class Stack : BaseMdsCommand
                     {
                         if (!string.IsNullOrEmpty(message))
                         {
-                            context.Status(message);
+                            context.Status(ToSpectreConsoleSafeString(message));
                         }
                     };
                     composeProcess.WaitForExit();
@@ -379,6 +410,16 @@ public class Stack : BaseMdsCommand
         if (composeProcess.ExitCode == 0)
         {
             this.AnsiConsole.WriteLine("Stack processes initializing.");
+            this.AnsiConsole.WriteLine();
+
+            var table = new Table();
+            table.AddColumns("Service", "Url", "Notes");
+            table.Border(TableBorder.Ascii);
+            table.ShowHeaders = true;
+
+            table.AddRow("Kibana", "http://localhost:5601/", "UN: elastic  PWD: changeme");
+
+            this.AnsiConsole.Write(table);
         }
         else
         {

@@ -80,7 +80,7 @@ public class MdsSdk
 
             return config;
         }
-        catch (Exception ex)
+        catch (Exception)
         {
             Console.WriteLine("Failed to get config from Identity");
             return new EnvironmentConfiguration();

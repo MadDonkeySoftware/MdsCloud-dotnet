@@ -1,8 +1,13 @@
 {
   "Logging": {
     "LogLevel": {
-      "Default": "Information",
+      "Default": "Trace",
       "Microsoft.AspNetCore": "Warning"
+    },
+    "MdsLogger": {
+      "Enabled": {{mds_logger_enabled}},
+      "ServiceName": "mdsCloudIdentity",
+      "LogStashUrl": "{{mds_logger_endpoint}}"
     }
   },
   "DeveloperSettings": {

@@ -70,8 +70,11 @@ public class StackServiceConfigManager : IStackServiceConfigManager
             settings.SourceDirectory,
             BaseStackConfigDirectory
         );
+        var elkBuilder = new ElkBuilder(settings.SourceDirectory, BaseStackConfigDirectory);
+
         Dispatch(dbBuilder);
         Dispatch(dbToolingBuilder);
+        Dispatch(elkBuilder);
 
         foreach (var service in builderLookup.Keys)
         {
@@ -106,13 +109,89 @@ public class StackServiceConfigManager : IStackServiceConfigManager
         );
 
         template = GetTemplateFromEmbeddedResource(
+            "MdsCloud.CLI.Templates.ELK.Compose.InContainer.scriban"
+        );
+        var elkStackComposeRendered = template.Render(
+            new
+            {
+                SetupContextPath = Path.Combine(
+                    BaseStackConfigDirectory,
+                    "configs",
+                    "elk",
+                    "setup"
+                ),
+                SetupEntrypointPath = Path.Combine(
+                    BaseStackConfigDirectory,
+                    "configs",
+                    "elk",
+                    "setup",
+                    "entrypoint.sh"
+                ),
+                SetupLibPath = Path.Combine(
+                    BaseStackConfigDirectory,
+                    "configs",
+                    "elk",
+                    "setup",
+                    "lib.sh"
+                ),
+                ElasticSearchContextPath = Path.Combine(
+                    BaseStackConfigDirectory,
+                    "configs",
+                    "elk",
+                    "elasticsearch"
+                ),
+                ElasticSearchConfigPath = Path.Combine(
+                    BaseStackConfigDirectory,
+                    "configs",
+                    "elk",
+                    "elasticsearch",
+                    "elasticsearch.yml"
+                ),
+                LogstashContextPath = Path.Combine(
+                    BaseStackConfigDirectory,
+                    "configs",
+                    "elk",
+                    "logstash"
+                ),
+                LogstashYamlPath = Path.Combine(
+                    BaseStackConfigDirectory,
+                    "configs",
+                    "elk",
+                    "logstash",
+                    "logstash.yml"
+                ),
+                LogstashConfPath = Path.Combine(
+                    BaseStackConfigDirectory,
+                    "configs",
+                    "elk",
+                    "logstash",
+                    "logstash.conf"
+                ),
+                KibanaContextPath = Path.Combine(
+                    BaseStackConfigDirectory,
+                    "configs",
+                    "elk",
+                    "kibana"
+                ),
+                KibanaConfigPath = Path.Combine(
+                    BaseStackConfigDirectory,
+                    "configs",
+                    "elk",
+                    "kibana",
+                    "kibana.yml"
+                ),
+            }
+        );
+
+        template = GetTemplateFromEmbeddedResource(
             "MdsCloud.CLI.Templates.DockerComposeBase.scriban"
         );
         var dockerComposeRendered = template.Render(
             new
             {
                 BaseConfigDir = Path.Join(BaseStackConfigDirectory, "configs"),
-                Identity = identityRendered
+                Identity = identityRendered,
+                Elk = elkStackComposeRendered,
             }
         );
         File.WriteAllText(
@@ -136,6 +215,17 @@ public class StackServiceConfigManager : IStackServiceConfigManager
             Path.Join(BaseStackConfigDirectory, "configs", "identity", "proxy", "nginx.conf"),
             nginxConfRendered
         );
+
+        // We rebuild the completed stack so that the ELK containers are ensured to be what was emitted.
+        EmitMilestone("Building ELK stack...");
+        var composeBuild = new ChildProcess("docker compose build", BaseStackConfigDirectory);
+        composeBuild.OnDataOutput += (_, message) =>
+        {
+            EmitStatusUpdate(message);
+        };
+        composeBuild.Start();
+        composeBuild.WaitForExit();
+        EmitMilestone("ELK stack build complete.");
     }
 
     protected void EmitStatusUpdate(string message)

@@ -8,17 +8,29 @@
 .DEFAULT_GOAL := help
 .PHONY := analysis autoformat clean clean-pyc dev-install dev-uninstall help lint requirements setup test upgrade-dependencies
 
+platform=$(shell uname -s)
+
 autoformat:  ## Runs the auto formatting tool
 	dotnet csharpier .
 
 compile:  ## Compiles the application down to a dist folder
-	ls | egrep "*.sln$$" | xargs -I {SLN} dotnet build {SLN} --force --no-incremental
+	ls | egrep ".sln$$" | xargs -I {SLN} dotnet build {SLN} --force --no-incremental
 
+ifeq ($(platform),Darwin)
+#TODO: Figure out Mac CLI install
+dev-cli-install:
+	@ln -s "$(shell pwd)/source/MdsCloud.CLI/bin/Debug/net7.0/MdsCloud.CLI" /usr/local/bin/mds
+
+dev-cli-uninstall:
+	@rm -f /usr/local/bin/mds
+else
+# NOTE: Linix specific (systemd based) config
 dev-cli-install:  ## Installs the mds cli in a way that each build is reflected immediately
 	@ln -s "$(shell pwd)/source/MdsCloud.CLI/bin/Debug/net7.0/MdsCloud.CLI" ~/.local/bin/mds
 
 dev-cli-uninstall:  ## Removes the mds cli that was installed via the dev-cli-install make target
 	@rm -f ~/.local/bin/mds
+endif
 
 dev-tool-install:  ## Installs the app in a way that modifications to the files are run easily
 	dotnet tool restore

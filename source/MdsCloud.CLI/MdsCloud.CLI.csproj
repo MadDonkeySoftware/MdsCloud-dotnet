@@ -30,13 +30,21 @@
 
     <ItemGroup>
       <EmbeddedResource Include="Templates\DbTooling\Appsettings.Json.scriban" />
+      <EmbeddedResource Include="Templates\ELK\Compose.InContainer.scriban" />
+      <EmbeddedResource Include="Templates\ELK\ElasticSearch\Dockerfile.scriban" />
+      <EmbeddedResource Include="Templates\ELK\ElasticSearch\elasticsearch.yml.scriban" />
+      <EmbeddedResource Include="Templates\ELK\Kibana\Dockerfile.scriban" />
+      <EmbeddedResource Include="Templates\ELK\Kibana\kibana.yml.scriban" />
+      <EmbeddedResource Include="Templates\ELK\Logstash\Dockerfile.scriban" />
+      <EmbeddedResource Include="Templates\ELK\Logstash\logstash.conf.scriban" />
+      <EmbeddedResource Include="Templates\ELK\Logstash\logstash.yml.scriban" />
+      <EmbeddedResource Include="Templates\ELK\Setup\Dockerfile.scriban" />
+      <EmbeddedResource Include="Templates\ELK\Setup\entrypoint-sh.scriban" />
+      <EmbeddedResource Include="Templates\ELK\Setup\lib-sh.scriban" />
       <EmbeddedResource Include="Templates\Identity\Appsettings.Json.scriban" />
       <EmbeddedResource Include="Templates\Identity\Compose.LocalDev.scriban" />
       <EmbeddedResource Include="Templates\Identity\Nginx.Config.scriban" />
-      <None Remove="Templates\DockerComposeBase.scriban" />
       <EmbeddedResource Include="Templates\DockerComposeBase.scriban" />
-      <None Remove="Templates\Identity.InContainer.scriban" />
-      <None Remove="Templates\Nginx.Config.scriban" />
       <EmbeddedResource Include="Templates\Identity\Compose.InContainer.scriban" />
     </ItemGroup>
 

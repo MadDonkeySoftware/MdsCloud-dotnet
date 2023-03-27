@@ -96,6 +96,8 @@ public class IdentityBuilder : BaseBuilder
         var identityAppSettingsJson = template.Render(
             new
             {
+                MdsLoggerEnabled = true,
+                MdsLoggerEndpoint = isLocalDev ? "http://localhost:6002" : "http://logstash:6002",
                 KeyPrivatePath = isLocalDev
                     ? Path.Join(BaseStackConfigDirectory, "configs", "identity", "keys", "key")
                     : Path.Join("keys", "key"),
