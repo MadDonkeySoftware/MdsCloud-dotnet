@@ -1,6 +1,8 @@
+using MdsCloud.Common.API.Logging;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Primitives;
 
 namespace MdsCloud.Common.API.Middleware;
 
@@ -20,14 +22,23 @@ public class CrossSystemTraceIdMiddleware
 
     public async Task InvokeAsync(HttpContext context)
     {
-        _logger.Log(LogLevel.Trace, "In custom middleware");
-        _logger.Log(LogLevel.Trace, "Path: {path}", context.Request.Path);
+        string traceId;
+        const string key = LoggingConstants.TraceRequestHeaderKey;
+        if (context.Request.Headers.ContainsKey(key))
+        {
+            traceId = context.Request.GetMdsTraceId();
+        }
+        else
+        {
+            traceId = Guid.NewGuid().ToString();
+            context.Request.Headers.Add(key, traceId);
+        }
 
-        context.Response.Headers.Add(
-            "mds-trace-id",
-            context.Request.Headers.ContainsKey("mds-trace-id")
-                ? context.Request.Headers["mds-trace-id"]
-                : Guid.NewGuid().ToString()
+        context.Response.Headers.Add(key, traceId);
+        _logger.LogWithMetadata(
+            LogLevel.Trace,
+            $"Handling request at path: {context.Request.Path}",
+            new Dictionary<string, dynamic> { { LoggingConstants.TraceLogKey, traceId } }
         );
 
         await _next(context);

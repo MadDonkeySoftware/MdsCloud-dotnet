@@ -175,6 +175,10 @@ Task InitializeSystemData(WebApplication? app, IConfiguration config, int attemp
                 logger.Log(LogLevel.Error, ex, "Failed to create system user");
             }
         }
+        else
+        {
+            logger.Log(LogLevel.Information, "System already initialized");
+        }
     }
     catch (Exception)
     {
@@ -302,6 +306,8 @@ app.UseAuthorization();
 // Middlewares
 // app.ValidateTokenMiddleware();
 app.UseCrossSystemTraceId();
+
+app.UseExceptionHandler("/error"); // TODO: is this right?
 
 app.MapControllers();
 

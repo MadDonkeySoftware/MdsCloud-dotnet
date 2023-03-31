@@ -1,3 +1,4 @@
+using MdsCloud.Common.API.Logging;
 using MdsCloud.Identity.DTOs;
 using MdsCloud.Identity.Utils;
 using Microsoft.AspNetCore.Mvc;
@@ -31,7 +32,13 @@ public abstract class MdsControllerBase : ControllerBase
     /// <returns></returns>
     protected BadRequestObjectResult FailRequest(string logReason, string? userMessage = null)
     {
-        Logger.Log(LogLevel.Debug, "{}", logReason);
+        Logger.LogWithMetadata(
+            LogLevel.Trace,
+            "Request Failed",
+            this.Request.GetMdsTraceId(),
+            new { Reason = logReason, UserMessage = userMessage, }
+        );
+
         RequestUtilities.Delay(10000);
         return BadRequest(
             new BadRequestResponse(
@@ -42,7 +49,7 @@ public abstract class MdsControllerBase : ControllerBase
                         new[]
                         {
                             userMessage
-                                ?? "Could not find account, user, or passwords did not match"
+                                ?? "Could not find account, user, or passwords did not match" // TODO: Update this after tests are in place.
                         }
                     }
                 }

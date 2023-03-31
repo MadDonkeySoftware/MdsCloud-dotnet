@@ -1,3 +1,4 @@
+using MdsCloud.Common.API.Logging;
 using MdsCloud.Identity.Authorization;
 using MdsCloud.Identity.Domain;
 using MdsCloud.Identity.DTOs;
@@ -37,7 +38,7 @@ public class UserController : ControllerBase
     /// <returns></returns>
     private BadRequestObjectResult FailRequest(string reason)
     {
-        _logger.Log(LogLevel.Debug, "{}", reason);
+        _logger.LogWithMetadata(LogLevel.Debug, reason, this.Request.GetMdsTraceId());
         _requestUtilities.Delay(10000);
         return BadRequest(
             new BadRequestResponse(
@@ -104,6 +105,12 @@ public class UserController : ControllerBase
         user.LastModified = DateTime.UtcNow;
         session.SaveOrUpdate(user);
         transaction.Commit();
+        _logger.LogWithMetadata(
+            LogLevel.Debug,
+            "Successfully updated user",
+            this.Request.GetMdsTraceId(),
+            new Dictionary<string, dynamic> { { "userId", userId }, }
+        );
         return Ok();
     }
 }

@@ -1,6 +1,8 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Security.Cryptography;
+using MdsCloud.Common.API.Logging;
+using MdsCloud.Common.API.Middleware;
 using MdsCloud.Identity.Domain;
 using MdsCloud.Identity.DTOs;
 using MdsCloud.Identity.DTOs.Authentication;
@@ -44,7 +46,14 @@ public class AuthenticationController : ControllerBase
     /// <returns></returns>
     private BadRequestObjectResult FailRequest(string reason)
     {
-        _logger.Log(LogLevel.Debug, "{}", reason);
+        _logger.LogWithMetadata(
+            LogLevel.Debug,
+            reason,
+            new Dictionary<string, dynamic>
+            {
+                { LoggingConstants.TraceLogKey, this.Request.GetMdsTraceId() }
+            }
+        );
         _requestUtilities.Delay(10000);
         return BadRequest(
             new BadRequestResponse(
@@ -122,7 +131,7 @@ public class AuthenticationController : ControllerBase
             SecurityAlgorithms.RsaSha256
         )
         {
-            CryptoProviderFactory = new CryptoProviderFactory() { CacheSignatureProviders = false },
+            CryptoProviderFactory = new CryptoProviderFactory { CacheSignatureProviders = false },
         };
         var utcNow = DateTime.UtcNow;
         var tokenDescriptor = new JwtSecurityToken(
@@ -144,6 +153,15 @@ public class AuthenticationController : ControllerBase
         user.LastActivity = DateTime.UtcNow;
         session.SaveOrUpdate(user);
         transaction.Commit();
+
+        _logger.LogWithMetadata(
+            LogLevel.Debug,
+            $"Successfully authenticated user {user.Id}",
+            new Dictionary<string, dynamic>
+            {
+                { LoggingConstants.TraceLogKey, this.Request.GetMdsTraceId() }
+            }
+        );
 
         return Ok(new { Token = new JwtSecurityTokenHandler().WriteToken(tokenDescriptor) });
     }

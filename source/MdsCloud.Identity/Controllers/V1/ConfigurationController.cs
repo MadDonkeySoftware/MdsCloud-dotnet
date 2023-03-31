@@ -1,3 +1,4 @@
+using MdsCloud.Common.API.Logging;
 using MdsCloud.Identity.Authorization;
 using MdsCloud.Identity.Domain;
 using MdsCloud.Identity.Domain.Enums;
@@ -78,6 +79,12 @@ public class ConfigurationController : ControllerBase
             }
         }
 
+        _logger.LogWithMetadata(
+            LogLevel.Debug,
+            "Successfully retrieved configuration data",
+            this.Request.GetMdsTraceId(),
+            response
+        );
         return Ok(response);
     }
 
@@ -92,6 +99,13 @@ public class ConfigurationController : ControllerBase
     )]
     public IActionResult Post([FromBody] ConfigurationRequestBody body)
     {
+        _logger.LogWithMetadata(
+            LogLevel.Trace,
+            "Updating configuration data.",
+            this.Request.GetMdsTraceId(),
+            body
+        );
+
         // TODO: Determine if request is from local address or external address
         using var session = _sessionFactory.OpenSession();
         using var transaction = session.BeginTransaction();

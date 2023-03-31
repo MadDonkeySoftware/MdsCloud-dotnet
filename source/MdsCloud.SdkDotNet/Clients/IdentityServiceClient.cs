@@ -1,6 +1,4 @@
-using System.Net;
 using System.Text;
-using MdsCloud.SdkDotNet.DTOs;
 using MdsCloud.SdkDotNet.DTOs.Identity;
 using MdsCloud.SdkDotNet.Utils;
 using Newtonsoft.Json;
@@ -45,7 +43,7 @@ public class IdentityServiceClient
             }
         );
 
-        if (response.StatusCode != HttpStatusCode.OK)
+        if (response == null || !response.IsSuccessStatusCode)
         {
             throw new Exception("An error occurred while updating the user");
         }
@@ -82,7 +80,7 @@ public class IdentityServiceClient
             }
         );
 
-        if (response.StatusCode != HttpStatusCode.OK)
+        if (response == null || !response.IsSuccessStatusCode)
         {
             throw new Exception("An error occurred while updating the user");
         }

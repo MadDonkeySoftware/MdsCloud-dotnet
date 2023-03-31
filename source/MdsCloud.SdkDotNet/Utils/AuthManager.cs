@@ -80,7 +80,7 @@ public class AuthManager : IAuthManager
             }
         );
 
-        if (response.StatusCode == HttpStatusCode.OK)
+        if (response.IsSuccessStatusCode)
         {
             var responseBody = await response.Content.ReadAsStringAsync();
             var token = JsonConvert.DeserializeObject<TokenPayload>(responseBody)?.Token;

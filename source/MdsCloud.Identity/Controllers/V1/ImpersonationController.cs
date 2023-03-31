@@ -1,6 +1,7 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Security.Cryptography;
+using MdsCloud.Common.API.Logging;
 using MdsCloud.Identity.Authorization;
 using MdsCloud.Identity.Domain;
 using MdsCloud.Identity.DTOs;
@@ -127,6 +128,19 @@ public class ImpersonationController : MdsControllerBase
                 issuedAt: utcNow,
                 expires: utcNow.AddMinutes(parsedLifespanMinutes)
             )
+        );
+
+        this.Logger.LogWithMetadata(
+            LogLevel.Debug,
+            "Impersonation successful",
+            this.Request.GetMdsTraceId(),
+            new
+            {
+                User = userId,
+                Account = accountId,
+                ImpersonatedUser = user.Id,
+                ImpersonatedAccount = account.Id
+            }
         );
         return Ok(
             new ImpersonationResponseBody

@@ -1,3 +1,4 @@
+using MdsCloud.Common.API.Logging;
 using MdsCloud.Identity.Domain;
 using MdsCloud.Identity.DTOs;
 using MdsCloud.Identity.DTOs.Registration;
@@ -92,6 +93,15 @@ public class RegistrationController : ControllerBase
         session.SaveOrUpdate(newUser);
         transaction.Commit();
 
-        return Ok(new { AccountId = newAccount.Id.ToString(), Status = "Success", });
+        _logger.LogWithMetadata(
+            LogLevel.Debug,
+            "Successfully registered new user",
+            this.Request.GetMdsTraceId(),
+            new { AccountId = newAccount.Id, UserId = newUser.Id, }
+        );
+        return Created(
+            string.Empty,
+            new { AccountId = newAccount.Id.ToString(), Status = "Success", }
+        );
     }
 }

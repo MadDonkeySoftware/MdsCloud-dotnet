@@ -3,27 +3,9 @@ using System.Net;
 using System.Net.Http.Headers;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Serialization;
 
 namespace MdsCloud.Common.API.Logging;
-
-// TODO: pid, hostname, name,
-internal class LogstashPayload
-{
-    [JsonProperty("name")]
-    public string? Name { get; set; }
-
-    [JsonProperty("@timestamp")]
-    public string? Timestamp { get; set; }
-
-    [JsonProperty("level")]
-    public int? Level { get; set; }
-
-    [JsonProperty("logLevel")]
-    public string? LogLevel { get; set; }
-
-    [JsonProperty("message")]
-    public string? Message { get; set; }
-}
 
 internal class RetryArguments
 {
@@ -74,23 +56,58 @@ public class LogStashLogger : ILogger
     {
         if (IsEnabled(logLevel))
         {
-            PostLogstashPayload(
-                new LogstashPayload
-                {
-                    Name = _getCurrentConfig().ServiceName,
-                    Timestamp = DateTime.UtcNow.ToString("o", CultureInfo.InvariantCulture),
-                    Level = ((int)logLevel + 1) * 10,
-                    LogLevel = logLevel.ToString(),
-                    Message = state != null ? state.ToString() : exception?.Message,
-                }
-            );
+            var stringMessage = state != null ? state.ToString() : exception?.Message;
+
+            PostLogstashPayload(GetPayload(stringMessage, logLevel));
         }
     }
 
-    private async void PostLogstashPayload(
-        LogstashPayload payload,
-        RetryArguments? retryArguments = null
-    )
+    private string GetPayload(string input, LogLevel logLevel)
+    {
+        // TODO: pid, hostname, name,
+        var dict = new Dictionary<string, dynamic>
+        {
+            { "event.dataset", _getCurrentConfig().ServiceName },
+            { "@timestamp", DateTime.UtcNow.ToString("o", CultureInfo.InvariantCulture) },
+            { "level", ((int)logLevel + 1) * 10 },
+            { "logLevel", logLevel.ToString() },
+            // { "message", "" },  // This is populated below. Leaving commented here so it is easy to see the template.
+        };
+        var restrictedKeys = dict.Keys;
+
+        try
+        {
+            var userDict = JsonConvert.DeserializeObject<Dictionary<string, dynamic>>(input);
+            foreach (var key in userDict.Keys)
+            {
+                if (userDict[key] != null && !restrictedKeys.Contains(key))
+                {
+                    if (key == "message")
+                    {
+                        dict[key] = userDict[key];
+                    }
+                    else
+                    {
+                        dict[$"metadata.{key}"] = userDict[key];
+                    }
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            dict["message"] = input;
+        }
+
+        return JsonConvert.SerializeObject(
+            dict,
+            new JsonSerializerSettings
+            {
+                ContractResolver = new CamelCasePropertyNamesContractResolver()
+            }
+        );
+    }
+
+    private async void PostLogstashPayload(string payload, RetryArguments? retryArguments = null)
     {
         var request = new HttpRequestMessage(HttpMethod.Post, _getCurrentConfig().LogStashUrl);
         request.Headers.Accept.Clear();
@@ -98,8 +115,7 @@ public class LogStashLogger : ILogger
         request.Headers.UserAgent.Clear();
         request.Headers.Add("User-Agent", "MDS Cloud API Logger");
 
-        var jsonBody = JsonConvert.SerializeObject(payload);
-        request.Content = new StringContent(jsonBody);
+        request.Content = new StringContent(payload);
 
         try
         {
