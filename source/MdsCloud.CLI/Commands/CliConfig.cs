@@ -101,10 +101,85 @@ public class CliConfig : BaseMdsCommand
     }
 
     [Command("wizard")]
-    public void Wizard()
+    public void Wizard([Option("env")] string? environment = null)
     {
-        // TODO: Implement or remove
-        this.AnsiConsole.WriteLine("Currently not implemented");
+        var env = environment ?? ConfigUtilities.GetDefaultEnvironment();
+        var config = ConfigUtilities.GetConfig(env);
+
+        var orderedProps = typeof(MdsCliConfiguration)
+            .GetProperties()
+            .OrderBy(
+                prop =>
+                    prop.GetCustomAttributes(true)
+                        .OfType<ConfigElementDisplaySettingsAttribute>()
+                        .First()
+                        .DisplayOrder
+            )
+            .Select(p => p);
+
+        var updated = false;
+
+        foreach (var propertyInfo in orderedProps)
+        {
+            foreach (
+                var attribute in propertyInfo
+                    .GetCustomAttributes(true)
+                    .OfType<ConfigElementDisplaySettingsAttribute>()
+            )
+            {
+                if (propertyInfo.PropertyType == typeof(bool?))
+                {
+                    var previous = (bool?)propertyInfo.GetValue(config);
+                    var previousConverted = previous.HasValue && previous.Value ? "Yes" : "No";
+                    var promptTitle =
+                        $"{attribute.QueryPrompt ?? "MISSING: QueryPrompt attribute value"} [green](Previously: {previousConverted})[/]";
+
+                    var prompt = new SelectionPrompt<string>()
+                        .Title(promptTitle)
+                        .AddChoices("No", "Yes");
+
+                    var newValue = AnsiConsole.Prompt(prompt);
+
+                    propertyInfo.SetValue(config, newValue == "Yes");
+
+                    if (previousConverted != newValue)
+                    {
+                        updated = true;
+                    }
+
+                    this.AnsiConsole.MarkupLine($"{promptTitle}: {newValue}");
+                }
+                else
+                {
+                    var previousValue = (string?)propertyInfo.GetValue(config);
+                    var prompt = new TextPrompt<string?>(
+                        attribute.QueryPrompt ?? "MISSING: QueryPrompt attribute value"
+                    )
+                        .DefaultValue(previousValue)
+                        .ShowDefaultValue(true);
+
+                    prompt.IsSecret = attribute.HideValue;
+                    var newValue = AnsiConsole.Prompt(prompt);
+
+                    if (previousValue != newValue)
+                    {
+                        updated = true;
+                    }
+
+                    propertyInfo.SetValue(config, newValue);
+                }
+            }
+        }
+
+        if (updated)
+        {
+            this.ConfigUtilities.SaveConfig(env, config);
+            this.AnsiConsole.WriteLine("Changes saved successfully.");
+        }
+        else
+        {
+            this.AnsiConsole.WriteLine("No changes detected.");
+        }
     }
 
     [Command("write")]
