@@ -1,11 +1,11 @@
 using MdsCloud.Identity.Utils;
 
-namespace MdsCloud.Identity.Test;
+namespace MdsCloud.Identity.Test.Unit.Utils;
 
-public class UnitTest1
+public class PasswordHasherTests
 {
     [Fact]
-    public void Test1()
+    public void Hashed_Password_Can_Be_Verified_Against()
     {
         const string samplePass = "pass";
         var result = PasswordHasher.Hash(samplePass);

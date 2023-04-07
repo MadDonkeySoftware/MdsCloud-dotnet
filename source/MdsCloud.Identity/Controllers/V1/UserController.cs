@@ -74,7 +74,11 @@ public class UserController : ControllerBase
         var userId = jwt.Claims.First(c => c.Type == "userId").Value;
         var user = session.Query<User>().First(u => u.Id == userId);
 
-        if (body.OldPassword != null && body.NewPassword != null)
+        if (
+            body.OldPassword != null
+            && body.NewPassword != null
+            && body.OldPassword != body.NewPassword
+        )
         {
             if (!PasswordHasher.Verify(body.OldPassword, user.Password))
             {

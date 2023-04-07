@@ -3,7 +3,9 @@ using System.Reflection;
 using CommandDotNet;
 using FluentMigrator.Runner;
 using FluentMigrator.Runner.Initialization;
+using FluentMigrator.Runner.VersionTableInfo;
 using MdsCloud.DbTooling.Extensions;
+using MdsCloud.DbTooling.Migrations;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Scriban;
@@ -12,15 +14,18 @@ namespace MdsCloud.DbTooling.Commands;
 
 public class Migrations
 {
-    private static ServiceProvider CreateServices(string scope)
+    private static string GetConnectionString(string scope)
     {
         var configRoot = new ConfigurationBuilder()
-            .AddJsonFile("appsettings.json", false, true)
-            .AddJsonFile("appsettings.Development.json", true, true)
-            .AddJsonFile("appsettings.Production.json", true, true)
+            .AddJsonFile("appsettings.json", false, false)
+            .AddJsonFile("appsettings.Development.json", true, false)
+            .AddJsonFile("appsettings.Production.json", true, false)
             .Build();
-        var connString = configRoot[$"databases:{scope}:connString"];
+        return configRoot[$"databases:{scope}:connString"];
+    }
 
+    public static ServiceProvider CreateServices(string scope, string connString)
+    {
         Console.WriteLine($"ConnString: {connString}");
 
         return new ServiceCollection()
@@ -35,6 +40,7 @@ public class Migrations
             )
             .AddLogging(config => config.AddFluentMigratorConsole())
             .Configure<RunnerOptions>(conf => conf.Tags = new[] { scope })
+            .AddScoped(typeof(IVersionTableMetaData), typeof(VersionTable))
             .BuildServiceProvider(false);
     }
 
@@ -42,7 +48,7 @@ public class Migrations
     {
         try
         {
-            using var serviceProvider = CreateServices(system);
+            using var serviceProvider = CreateServices(system, GetConnectionString(system));
             using var scope = serviceProvider.CreateScope();
 
             var runner = serviceProvider.GetRequiredService<IMigrationRunner>();

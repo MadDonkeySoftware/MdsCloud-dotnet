@@ -2,6 +2,7 @@ using MdsCloud.Common.API.Logging;
 using MdsCloud.Identity.Domain;
 using MdsCloud.Identity.DTOs;
 using MdsCloud.Identity.DTOs.Registration;
+using MdsCloud.Identity.Settings;
 using MdsCloud.Identity.Utils;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -20,19 +21,19 @@ public class RegistrationController : ControllerBase
 {
     private readonly ILogger<RegistrationController> _logger;
     private readonly ISessionFactory _sessionFactory;
-    private readonly IConfiguration _configuration;
+    private readonly ISettings _settings;
     private readonly IRequestUtilities _requestUtilities;
 
     public RegistrationController(
         ILogger<RegistrationController> logger,
         ISessionFactory sessionFactory,
-        IConfiguration configuration,
+        ISettings settings,
         IRequestUtilities requestUtilities
     )
     {
         _logger = logger;
         _sessionFactory = sessionFactory;
-        _configuration = configuration;
+        _settings = settings;
         _requestUtilities = requestUtilities;
     }
 
@@ -65,9 +66,7 @@ public class RegistrationController : ControllerBase
             );
         }
 
-        var bypassActivation = bool.Parse(
-            _configuration["MdsSettings:BypassUserActivation"] ?? "False"
-        );
+        var bypassActivation = bool.Parse(_settings["MdsSettings:BypassUserActivation"] ?? "False");
         var newAccount = new Account
         {
             Name = body.AccountName,

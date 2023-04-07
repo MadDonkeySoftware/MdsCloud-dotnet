@@ -8,6 +8,7 @@ public class UserMap : ClassMap<User>
 {
     UserMap()
     {
+        Table("user");
         Id(u => u.Id).Column("id");
         Map(u => u.Email).Column("email");
         Map(u => u.FriendlyName).Column("friendly_name");
@@ -18,6 +19,8 @@ public class UserMap : ClassMap<User>
         Map(u => u.Created).Column("created").CustomType(typeof(DateTimeAsLong));
         Map(u => u.LastActivity).Column("last_activity").CustomType(typeof(DateTimeAsLong));
         Map(u => u.LastModified).Column("last_modified").CustomType(typeof(DateTimeAsLong));
+
         References<Account>(u => u.Account).Column("account_id");
+        Map(u => u.AccountId).Formula("account_id");
     }
 }

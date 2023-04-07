@@ -37,9 +37,13 @@ internal class SdkHttpRequestFactory
     internal async Task<T> MakeRequest<T>(CreateRequestArgs args)
     {
         var response = await MakeRequest(args);
+        if (response == null)
+        {
+            throw new Exception("Failed to obtain response from service");
+        }
         var body = response.Content.ReadAsStringAsync().Result;
         var responsePayload = JsonConvert.DeserializeObject<T>(body);
-        return responsePayload;
+        return responsePayload ?? throw new Exception("Failed to parse response from service");
     }
 
     internal async Task<HttpRequestMessage> CreateBaseRequest(CreateRequestArgs args)

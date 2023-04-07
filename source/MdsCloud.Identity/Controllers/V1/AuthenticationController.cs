@@ -1,11 +1,12 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Security.Cryptography;
+using MadDonkeySoftware.SystemWrappers.IO;
 using MdsCloud.Common.API.Logging;
-using MdsCloud.Common.API.Middleware;
 using MdsCloud.Identity.Domain;
 using MdsCloud.Identity.DTOs;
 using MdsCloud.Identity.DTOs.Authentication;
+using MdsCloud.Identity.Settings;
 using MdsCloud.Identity.Utils;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -24,20 +25,23 @@ public class AuthenticationController : ControllerBase
 {
     private readonly ILogger<AuthenticationController> _logger;
     private readonly ISessionFactory _sessionFactory;
-    private readonly IConfiguration _configuration;
+    private readonly ISettings _settings;
     private readonly IRequestUtilities _requestUtilities;
+    private readonly IFile _file;
 
     public AuthenticationController(
         ILogger<AuthenticationController> logger,
         ISessionFactory sessionFactory,
-        IConfiguration configuration,
-        IRequestUtilities requestUtilities
+        ISettings settings,
+        IRequestUtilities requestUtilities,
+        IFile file
     )
     {
         _logger = logger;
         _sessionFactory = sessionFactory;
-        _configuration = configuration;
+        _settings = settings;
         _requestUtilities = requestUtilities;
+        _file = file;
     }
 
     /// <summary>
@@ -112,19 +116,17 @@ public class AuthenticationController : ControllerBase
         }
 
         double parsedLifespanMinutes = double.TryParse(
-            _configuration["MdsSettings:JwtSettings:LifespanMinutes"],
+            _settings["MdsSettings:JwtSettings:LifespanMinutes"],
             out parsedLifespanMinutes
         )
             ? parsedLifespanMinutes
             : 60d;
 
-        var privateKeyBytes = System.IO.File.ReadAllText(
-            _configuration["MdsSettings:Secrets:PrivatePath"] ?? ""
-        );
+        var privateKeyBytes = _file.ReadAllText(_settings["MdsSettings:Secrets:PrivatePath"] ?? "");
         using var rsa = RSA.Create();
         rsa.ImportFromEncryptedPem(
             privateKeyBytes,
-            _configuration["MdsSettings:Secrets:PrivatePassword"] ?? ""
+            _settings["MdsSettings:Secrets:PrivatePassword"] ?? ""
         );
         var signingCredentials = new SigningCredentials(
             new RsaSecurityKey(rsa),
@@ -137,8 +139,8 @@ public class AuthenticationController : ControllerBase
         var tokenDescriptor = new JwtSecurityToken(
             new JwtHeader(signingCredentials),
             new JwtPayload(
-                audience: _configuration["MdsSettings:JwtSettings:Audience"],
-                issuer: _configuration["MdsSettings:JwtSettings:Issuer"],
+                audience: _settings["MdsSettings:JwtSettings:Audience"],
+                issuer: _settings["MdsSettings:JwtSettings:Issuer"],
                 claims: new Claim[]
                 {
                     new("accountId", account.Id.ToString()),

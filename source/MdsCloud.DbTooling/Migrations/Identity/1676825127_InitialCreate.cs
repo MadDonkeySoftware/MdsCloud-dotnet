@@ -11,17 +11,18 @@ public class InitialCreate : Migration
     {
         // csharpier-ignore-start
         Create.Sequence("account_pk_seq");
-        Create.Table("Account")
+
+        Create.Table("account")
             .WithColumn("id").AsInt64().PrimaryKey()
             .WithColumn("name").AsString(255).NotNullable()
             .WithColumn("is_active").AsBoolean().NotNullable()
             .WithColumn("created").AsInt64().NotNullable()
             .WithColumn("last_activity").AsInt64().Nullable();
 
-        Create.Table("User")
+        Create.Table("user")
             .WithColumn("id").AsString(255).PrimaryKey().NotNullable()
             .WithColumn("email").AsString(255).NotNullable()
-            .WithColumn("account_id").AsInt64().NotNullable().ForeignKey("fk_account_id_to_account_id", "Account", "id")
+            .WithColumn("account_id").AsInt64().NotNullable().ForeignKey("fk_account_id_to_account_id", "account", "id")
             .WithColumn("friendly_name").AsString(255).NotNullable()
             .WithColumn("password").AsString(255).NotNullable()
             .WithColumn("is_primary").AsBoolean().NotNullable()
@@ -31,22 +32,22 @@ public class InitialCreate : Migration
             .WithColumn("last_activity").AsInt64().Nullable()
             .WithColumn("last_modified").AsInt64().Nullable();
 
-        Create.Table("LandscapeUrl")
+        Create.Table("landscape_url")
             .WithColumn("scope").AsString(255).NotNullable()
             .WithColumn("key").AsString(255).NotNullable()
             .WithColumn("value").AsString(255).NotNullable();
-        Create.PrimaryKey().OnTable("LandscapeUrl").Columns("scope", "key");
+        Create.PrimaryKey().OnTable("landscape_url").Columns("scope", "key");
 
-        Create.UniqueConstraint().OnTable("LandscapeUrl").Columns("scope", "key", "value");
+        Create.UniqueConstraint().OnTable("landscape_url").Columns("scope", "key", "value");
         // csharpier-ignore-end
     }
 
     public override void Down()
     {
         // csharpier-ignore-start
-        Delete.Table("LandscapeUrl");
-        Delete.Table("User");
-        Delete.Table("Account");
+        Delete.Table("landscape_url");
+        Delete.Table("user");
+        Delete.Table("account");
         Delete.Sequence("account_pk_seq");
         // csharpier-ignore-end
     }

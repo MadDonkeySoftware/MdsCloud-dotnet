@@ -8,7 +8,8 @@ public class AccountMap : ClassMap<Account>
 {
     public AccountMap()
     {
-        Id(a => a.Id).Column("id").GeneratedBy.Sequence("Account_PK_seq");
+        Table("account");
+        Id(a => a.Id).Column("id").GeneratedBy.Sequence("account_pk_seq");
         Map(a => a.Name).Column("name");
         HasMany<User>(a => a.Users);
         Map(a => a.IsActive).Column("is_active");

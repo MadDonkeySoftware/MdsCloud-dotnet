@@ -1,5 +1,7 @@
+using MadDonkeySoftware.SystemWrappers.IO;
 using MdsCloud.Identity.DTOs;
 using MdsCloud.Identity.DTOs.PublicSignature;
+using MdsCloud.Identity.Settings;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Annotations;
@@ -13,15 +15,18 @@ namespace MdsCloud.Identity.Controllers.V1;
 public class PublicSignatureController : ControllerBase
 {
     private readonly ILogger<PublicSignatureController> _logger;
-    private readonly IConfiguration _configuration;
+    private readonly ISettings _settings;
+    private readonly IFile _file;
 
     public PublicSignatureController(
         ILogger<PublicSignatureController> logger,
-        IConfiguration configuration
+        ISettings settings,
+        IFile file
     )
     {
         _logger = logger;
-        _configuration = configuration;
+        _settings = settings;
+        _file = file;
     }
 
     [AllowAnonymous]
@@ -31,9 +36,7 @@ public class PublicSignatureController : ControllerBase
     [SwaggerOperation(Description = "", Summary = "", Tags = new[] { "Configuration" })]
     public IActionResult Get()
     {
-        var publicKeyText = System.IO.File.ReadAllText(
-            _configuration["MdsSettings:Secrets:PublicPath"] ?? ""
-        );
+        var publicKeyText = _file.ReadAllText(_settings["MdsSettings:Secrets:PublicPath"] ?? "");
         var response = new PublicSignatureResponseBody { Signature = publicKeyText };
 
         return Ok(response);

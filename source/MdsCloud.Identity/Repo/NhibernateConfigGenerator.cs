@@ -16,8 +16,14 @@ public static class NhibernateConfigGenerator
             ? overrides["DBConnection"]
             : config.GetConnectionString("DBConnection");
 
-        var dbConfig = PostgreSQLConfiguration.Standard.ConnectionString(connString);
-        if (bool.TryParse(config["DeveloperSettings:ShowSql"], out var showSql) && showSql)
+        var showSqlSetting = overrides.ContainsKey("DeveloperSettings:ShowSql")
+            ? overrides["DeveloperSettings:ShowSql"]
+            : config["DeveloperSettings:ShowSql"];
+
+        var dbConfig = PostgreSQLConfiguration.Standard
+            .ConnectionString(connString)
+            .DefaultSchema("public");
+        if (bool.TryParse(showSqlSetting, out var showSql) && showSql)
         {
             dbConfig.ShowSql();
         }

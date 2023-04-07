@@ -53,13 +53,23 @@ public class JwtAuthenticationHandler : AuthenticationHandler<JwtKeyAuthenticati
 
             var roles = new List<string> { Roles.User };
             var user = session.Query<User>().First(u => u.Id == userId);
+
+            // NOTE: We cannot use the related Account object because postgres doesn't support MARS.
+            // As an annoying work around we pull the account directly.
+            var account = session.Query<Account>().First(u => u.Id == user.AccountId);
             // await _identityContext.Entry(user).Reference(u => u.Account).LoadAsync();
 
+            if (user.AccountId.ToString() != accountId)
+            {
+                return AuthenticateResult.Fail(
+                    "Requested user does not belong to requested account."
+                );
+            }
             if (!user.IsActive)
             {
                 return AuthenticateResult.Fail("User is not active");
             }
-            if (!user.Account.IsActive)
+            if (!account.IsActive)
             {
                 return AuthenticateResult.Fail("Account is not active");
             }
@@ -68,7 +78,7 @@ public class JwtAuthenticationHandler : AuthenticationHandler<JwtKeyAuthenticati
             {
                 roles.Add(Roles.PrimaryUser);
             }
-            if (user.Account.Id == 1)
+            if (account.Id == 1)
             {
                 roles.Add(Roles.SystemAccount);
                 roles.Add(Roles.Impersonator);

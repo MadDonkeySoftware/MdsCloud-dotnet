@@ -80,7 +80,7 @@ public class AuthManager : IAuthManager
             }
         );
 
-        if (response.IsSuccessStatusCode)
+        if (response is { IsSuccessStatusCode: true })
         {
             var responseBody = await response.Content.ReadAsStringAsync();
             var token = JsonConvert.DeserializeObject<TokenPayload>(responseBody)?.Token;
@@ -90,11 +90,9 @@ public class AuthManager : IAuthManager
             }
             return token;
         }
-        else
-        {
-            // TODO: specific exception
-            throw new Exception("Failed to get new token");
-        }
+
+        // TODO: specific exception
+        throw new Exception("Failed to get new token");
     }
 
     private string GetCacheKey(string accountId, string userId) =>

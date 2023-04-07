@@ -1,16 +1,19 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Cryptography;
-using Microsoft.IdentityModel.Tokens;
+using MadDonkeySoftware.SystemWrappers.IO;
+using MdsCloud.Identity.Settings;
 
 namespace MdsCloud.Identity.Utils;
 
 public class RequestUtilities : IRequestUtilities
 {
-    private readonly IConfiguration _configuration;
+    private readonly IFile _file;
+    private readonly ISettings _settings;
 
-    public RequestUtilities(IConfiguration configuration)
+    public RequestUtilities(ISettings settings, IFile file)
     {
-        _configuration = configuration;
+        _file = file;
+        _settings = settings;
     }
 
     public void Delay(int milliseconds)
@@ -25,13 +28,11 @@ public class RequestUtilities : IRequestUtilities
             ? authorizationHeader.Substring(prefix.Length)
             : authorizationHeader;
 
-        var publicKeyText = File.ReadAllText(
-            _configuration["MdsSettings:Secrets:PublicPath"] ?? ""
-        );
+        var publicKeyText = _file.ReadAllText(_settings["MdsSettings:Secrets:PublicPath"] ?? "");
         using var rsa = RSA.Create();
         rsa.ImportFromPem(publicKeyText);
 
-        var validationParameters = SecurityHelpers.GetJwtValidationParameters(_configuration, rsa);
+        var validationParameters = SecurityHelpers.GetJwtValidationParameters(_settings, rsa);
 
         var handler = new JwtSecurityTokenHandler();
         handler.ValidateToken(standardizedAuthHeader, validationParameters, out var validatedToken);

@@ -1,11 +1,13 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Security.Cryptography;
+using MadDonkeySoftware.SystemWrappers.IO;
 using MdsCloud.Common.API.Logging;
 using MdsCloud.Identity.Authorization;
 using MdsCloud.Identity.Domain;
 using MdsCloud.Identity.DTOs;
 using MdsCloud.Identity.DTOs.Impersonation;
+using MdsCloud.Identity.Settings;
 using MdsCloud.Identity.Utils;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -22,13 +24,19 @@ namespace MdsCloud.Identity.Controllers.V1;
 [ApiExplorerSettings(IgnoreApi = true)]
 public class ImpersonationController : MdsControllerBase
 {
+    private readonly IFile _file;
+
     public ImpersonationController(
         ILogger<ImpersonationController> logger,
         ISessionFactory sessionFactory,
-        IConfiguration configuration,
-        IRequestUtilities requestUtilities
+        ISettings settings,
+        IRequestUtilities requestUtilities,
+        IFile file
     )
-        : base(logger, sessionFactory, configuration, requestUtilities) { }
+        : base(logger, sessionFactory, settings, requestUtilities)
+    {
+        _file = file;
+    }
 
     [Authorize(Policy = Policies.Impersonator)]
     [HttpPost(Name = "Impersonate")]
@@ -89,19 +97,17 @@ public class ImpersonationController : MdsControllerBase
         }
 
         double parsedLifespanMinutes = double.TryParse(
-            Configuration["MdsSettings:JwtSettings:LifespanMinutes"],
+            Settings["MdsSettings:JwtSettings:LifespanMinutes"],
             out parsedLifespanMinutes
         )
             ? parsedLifespanMinutes
             : 60d;
 
-        var privateKeyBytes = System.IO.File.ReadAllText(
-            Configuration["MdsSettings:Secrets:PrivatePath"] ?? ""
-        );
+        var privateKeyBytes = _file.ReadAllText(Settings["MdsSettings:Secrets:PrivatePath"] ?? "");
         using var rsa = RSA.Create();
         rsa.ImportFromEncryptedPem(
             privateKeyBytes,
-            Configuration["MdsSettings:Secrets:PrivatePassword"] ?? ""
+            Settings["MdsSettings:Secrets:PrivatePassword"] ?? ""
         );
         var signingCredentials = new SigningCredentials(
             new RsaSecurityKey(rsa),
@@ -114,8 +120,8 @@ public class ImpersonationController : MdsControllerBase
         var tokenDescriptor = new JwtSecurityToken(
             new JwtHeader(signingCredentials),
             new JwtPayload(
-                audience: Configuration["MdsSettings:JwtSettings:Audience"],
-                issuer: Configuration["MdsSettings:JwtSettings:Issuer"],
+                audience: Settings["MdsSettings:JwtSettings:Audience"],
+                issuer: Settings["MdsSettings:JwtSettings:Issuer"],
                 claims: new Claim[]
                 {
                     new("accountId", account.Id.ToString()),

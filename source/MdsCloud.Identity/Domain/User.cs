@@ -14,4 +14,5 @@ public class User
     public virtual DateTime? LastActivity { get; set; }
     public virtual DateTime? LastModified { get; set; }
     public virtual Account Account { get; set; }
+    public virtual long AccountId { get; set; }
 }

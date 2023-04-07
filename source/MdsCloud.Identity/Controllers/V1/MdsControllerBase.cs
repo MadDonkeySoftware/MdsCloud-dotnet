@@ -1,5 +1,6 @@
 using MdsCloud.Common.API.Logging;
 using MdsCloud.Identity.DTOs;
+using MdsCloud.Identity.Settings;
 using MdsCloud.Identity.Utils;
 using Microsoft.AspNetCore.Mvc;
 using NHibernate;
@@ -10,19 +11,19 @@ public abstract class MdsControllerBase : ControllerBase
 {
     protected readonly ILogger<ImpersonationController> Logger;
     protected readonly ISessionFactory SessionFactory;
-    protected readonly IConfiguration Configuration;
+    protected readonly ISettings Settings;
     protected readonly IRequestUtilities RequestUtilities;
 
     protected MdsControllerBase(
         ILogger<ImpersonationController> logger,
         ISessionFactory sessionFactory,
-        IConfiguration configuration,
+        ISettings settings,
         IRequestUtilities requestUtilities
     )
     {
         Logger = logger;
         SessionFactory = sessionFactory;
-        Configuration = configuration;
+        Settings = settings;
         RequestUtilities = requestUtilities;
     }
 

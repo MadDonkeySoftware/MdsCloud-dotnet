@@ -1,4 +1,5 @@
 using System.Security.Cryptography;
+using MadDonkeySoftware.SystemWrappers.IO;
 using MdsCloud.Identity.Authentication;
 using MdsCloud.Identity.Authorization;
 using MdsCloud.Identity.Domain;
@@ -7,6 +8,7 @@ using MdsCloud.Identity.Utils;
 using MdsCloud.Common.API.Logging;
 using MdsCloud.Common.API.Middleware;
 using MdsCloud.Identity.Domain.Enums;
+using MdsCloud.Identity.Settings;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using NHibernate;
 
@@ -195,16 +197,16 @@ Task InitializeSystemData(WebApplication? app, IConfiguration config, int attemp
 ISessionFactory CreateSessionFactory(IConfiguration config)
 {
     var fluentConfig = NhibernateConfigGenerator.Generate(config);
-    // fluentConfig.ExposeConfiguration((config) => new SchemaExport(config).Create(false, true));
     return fluentConfig.BuildSessionFactory();
 }
 
 var configRoot = new ConfigurationBuilder()
-    .AddJsonFile("appsettings.json", false, true)
-    .AddJsonFile("appsettings.Development.json", true, true)
-    .AddJsonFile("appsettings.Production.json", true, true)
+    .AddJsonFile("appsettings.json", false, false)
+    .AddJsonFile("appsettings.Development.json", true, false)
+    .AddJsonFile("appsettings.Production.json", true, false)
     .Build();
-var requestUtilities = new RequestUtilities(configRoot);
+var settingsRoot = new Settings(configRoot);
+var requestUtilities = new RequestUtilities(settingsRoot, new FileWrapper());
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -215,9 +217,10 @@ builder.Services.AddSwaggerGen(sg =>
 
 var nhibernateSessionFactory = CreateSessionFactory(builder.Configuration);
 
-builder.Services.AddSingleton<IConfiguration>(configRoot);
+builder.Services.AddSingleton<ISettings>(settingsRoot);
 builder.Services.AddSingleton<IRequestUtilities>(requestUtilities);
 builder.Services.AddSingleton<ISessionFactory>(nhibernateSessionFactory);
+builder.Services.AddSingleton<IFile>(new FileWrapper());
 
 // Add services to the container.
 
@@ -259,7 +262,7 @@ builder.Services
         );
 
         options.TokenValidationParameters = SecurityHelpers.GetJwtValidationParameters(
-            configRoot,
+            settingsRoot,
             rsa
         );
 
@@ -307,7 +310,7 @@ app.UseAuthorization();
 // app.ValidateTokenMiddleware();
 app.UseCrossSystemTraceId();
 
-app.UseExceptionHandler("/error"); // TODO: is this right?
+app.UseExceptionHandler("/error");
 
 app.MapControllers();
 
