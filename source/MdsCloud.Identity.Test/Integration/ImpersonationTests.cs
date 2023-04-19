@@ -1,11 +1,11 @@
 using System.Net;
 using MadDonkeySoftware.SystemWrappers.IO;
 using MdsCloud.Identity.Domain;
-using MdsCloud.Identity.DTOs.Authentication;
-using MdsCloud.Identity.DTOs.Impersonation;
 using MdsCloud.Identity.Settings;
 using MdsCloud.Identity.Test.TestHelpers;
-using MdsCloud.Identity.Utils;
+using MdsCloud.Identity.UI.DTOs.Authentication;
+using MdsCloud.Identity.UI.DTOs.Impersonation;
+using MdsCloud.Identity.UI.Utils;
 using Microsoft.Extensions.DependencyInjection;
 using Moq;
 using Newtonsoft.Json;

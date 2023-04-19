@@ -1,12 +1,12 @@
 using System.Net;
 using MadDonkeySoftware.SystemWrappers.IO;
-using MdsCloud.Identity.Controllers.V1;
 using MdsCloud.Identity.Domain;
-using MdsCloud.Identity.DTOs.Authentication;
-using MdsCloud.Identity.DTOs.User;
 using MdsCloud.Identity.Settings;
 using MdsCloud.Identity.Test.TestHelpers;
-using MdsCloud.Identity.Utils;
+using MdsCloud.Identity.UI.Controllers.V1;
+using MdsCloud.Identity.UI.DTOs.Authentication;
+using MdsCloud.Identity.UI.DTOs.User;
+using MdsCloud.Identity.UI.Utils;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Moq;
@@ -24,7 +24,7 @@ public class UserTests : IDisposable, IClassFixture<IdentityDatabaseBuilder>
     private readonly Mock<IRequestUtilities> _requestUtilitiesMock = new();
     private readonly Mock<ILogger<UserController>> _logger = new();
 
-    private string _adminAuthToken = string.Empty;
+    private string _authToken = string.Empty;
 
     public UserTests(IdentityDatabaseBuilder dbBuilder)
     {
@@ -61,7 +61,7 @@ public class UserTests : IDisposable, IClassFixture<IdentityDatabaseBuilder>
         string password
     )
     {
-        if (string.IsNullOrEmpty(_adminAuthToken))
+        if (string.IsNullOrEmpty(_authToken))
         {
             var response = await TestHttpRequestFactory.MakeRequest(
                 client,
@@ -90,10 +90,10 @@ public class UserTests : IDisposable, IClassFixture<IdentityDatabaseBuilder>
                 throw new NullReferenceException("Unable to obtain authentication result");
             }
 
-            _adminAuthToken = body.Token;
+            _authToken = body.Token;
         }
 
-        return _adminAuthToken;
+        return _authToken;
     }
 
     [Fact(DisplayName = "POST when all parameters valid updates the user accordingly")]
@@ -301,308 +301,4 @@ public class UserTests : IDisposable, IClassFixture<IdentityDatabaseBuilder>
         var body = response!.Content.ReadAsStringAsync().Result;
         Assert.Contains("Could not find account, user, or passwords did not match", body);
     }
-
-    //
-    // [Fact(
-    //     DisplayName = "POST when non-impersonation-enabled account makes request returns forbidden"
-    // )]
-    // public async Task POST_when_non_impersonation_enabled_account_makes_request_returns_forbidden()
-    // {
-    //     // Arrange
-    //     _fileMock
-    //         .Setup(o => o.ReadAllText(It.Is<string>(x => x.EndsWith("key"))))
-    //         .Returns(TestConstants.TestPrivateKeyData);
-    //     _fileMock
-    //         .Setup(o => o.ReadAllText(It.Is<string>(x => x.EndsWith("key.pub.pem"))))
-    //         .Returns(TestConstants.TestPublicPemData);
-    //     _settingsMock
-    //         .Setup(o => o["MdsSettings:Secrets:PrivatePath"])
-    //         .Returns((string key) => "/some/path/to/key");
-    //     _settingsMock
-    //         .Setup(o => o["MdsSettings:Secrets:PrivatePassword"])
-    //         .Returns((string key) => TestConstants.TestPrivateKeyPassword);
-    //     _settingsMock
-    //         .Setup(o => o["MdsSettings:Secrets:PublicPath"])
-    //         .Returns((string key) => "/some/path/to/key.pub.pem");
-    //     _settingsMock
-    //         .Setup(o => o["MdsSettings:JwtSettings:Audience"])
-    //         .Returns((string key) => TestConstants.TestJwtIssuer);
-    //     _settingsMock
-    //         .Setup(o => o["MdsSettings:JwtSettings:Issuer"])
-    //         .Returns((string key) => TestConstants.TestJwtIssuer);
-    //     _settingsMock
-    //         .Setup(o => o["MdsSettings:BypassUserActivation"])
-    //         .Returns((string key) => "True");
-    //     using var client = _factory.CreateClient();
-    //     var userDetails1 = await UserHelpers.CreateTestUser(client);
-    //     var userDetails2 = await UserHelpers.CreateTestUser(client);
-    //
-    //     // Act
-    //     var adminAuthToken = await GetAuthToken(
-    //         client,
-    //         userDetails1.AccountId,
-    //         userDetails1.UserName,
-    //         userDetails1.Password
-    //     );
-    //     var response = await TestHttpRequestFactory.MakeRequest(
-    //         client,
-    //         new CreateRequestArgs
-    //         {
-    //             Content = TestHttpRequestFactory.CreateJsonContent(
-    //                 new ImpersonationRequestBody() { AccountId = userDetails2.AccountId }
-    //             ),
-    //             Url = "/v1/impersonate",
-    //             HttpMethod = HttpMethod.Post,
-    //             AllowSelfSignCert = true,
-    //             AuthToken = adminAuthToken,
-    //         }
-    //     );
-    //
-    //     // Assert
-    //     Assert.Equal(HttpStatusCode.Forbidden, response?.StatusCode);
-    //     Assert.Equal("", response!.Content.ReadAsStringAsync().Result);
-    // }
-    //
-    // [Fact(DisplayName = "POST when requesting account that does not exist returns bad request")]
-    // public async Task POST_When_requesting_account_that_does_not_exist_returns_bad_request()
-    // {
-    //     // Arrange
-    //     _fileMock
-    //         .Setup(o => o.ReadAllText(It.Is<string>(x => x.EndsWith("key"))))
-    //         .Returns(TestConstants.TestPrivateKeyData);
-    //     _fileMock
-    //         .Setup(o => o.ReadAllText(It.Is<string>(x => x.EndsWith("key.pub.pem"))))
-    //         .Returns(TestConstants.TestPublicPemData);
-    //     _settingsMock
-    //         .Setup(o => o["MdsSettings:Secrets:PrivatePath"])
-    //         .Returns((string key) => "/some/path/to/key");
-    //     _settingsMock
-    //         .Setup(o => o["MdsSettings:Secrets:PrivatePassword"])
-    //         .Returns((string key) => TestConstants.TestPrivateKeyPassword);
-    //     _settingsMock
-    //         .Setup(o => o["MdsSettings:Secrets:PublicPath"])
-    //         .Returns((string key) => "/some/path/to/key.pub.pem");
-    //     _settingsMock
-    //         .Setup(o => o["MdsSettings:JwtSettings:Audience"])
-    //         .Returns((string key) => TestConstants.TestJwtIssuer);
-    //     _settingsMock
-    //         .Setup(o => o["MdsSettings:JwtSettings:Issuer"])
-    //         .Returns((string key) => TestConstants.TestJwtIssuer);
-    //     _settingsMock
-    //         .Setup(o => o["MdsSettings:BypassUserActivation"])
-    //         .Returns((string key) => "True");
-    //     using var client = _factory.CreateClient();
-    //
-    //     // Act
-    //     var adminAuthToken = await GetAdminAuthToken(client);
-    //     var response = await TestHttpRequestFactory.MakeRequest(
-    //         client,
-    //         new CreateRequestArgs
-    //         {
-    //             Content = TestHttpRequestFactory.CreateJsonContent(
-    //                 new ImpersonationRequestBody() { AccountId = "9999" }
-    //             ),
-    //             Url = "/v1/impersonate",
-    //             HttpMethod = HttpMethod.Post,
-    //             AllowSelfSignCert = true,
-    //             AuthToken = adminAuthToken,
-    //         }
-    //     );
-    //
-    //     // Assert
-    //     Assert.Equal(HttpStatusCode.BadRequest, response?.StatusCode);
-    //     Assert.Contains(
-    //         "Could not find account, user, or insufficient privilege to impersonate",
-    //         response?.Content.ReadAsStringAsync().Result
-    //     );
-    // }
-    //
-    // [Fact(DisplayName = "POST when requesting account that does inactive returns bad request")]
-    // public async Task POST_When_requesting_account_that_is_inactive_returns_bad_request()
-    // {
-    //     // Arrange
-    //     _fileMock
-    //         .Setup(o => o.ReadAllText(It.Is<string>(x => x.EndsWith("key"))))
-    //         .Returns(TestConstants.TestPrivateKeyData);
-    //     _fileMock
-    //         .Setup(o => o.ReadAllText(It.Is<string>(x => x.EndsWith("key.pub.pem"))))
-    //         .Returns(TestConstants.TestPublicPemData);
-    //     _settingsMock
-    //         .Setup(o => o["MdsSettings:Secrets:PrivatePath"])
-    //         .Returns((string key) => "/some/path/to/key");
-    //     _settingsMock
-    //         .Setup(o => o["MdsSettings:Secrets:PrivatePassword"])
-    //         .Returns((string key) => TestConstants.TestPrivateKeyPassword);
-    //     _settingsMock
-    //         .Setup(o => o["MdsSettings:Secrets:PublicPath"])
-    //         .Returns((string key) => "/some/path/to/key.pub.pem");
-    //     _settingsMock
-    //         .Setup(o => o["MdsSettings:JwtSettings:Audience"])
-    //         .Returns((string key) => TestConstants.TestJwtIssuer);
-    //     _settingsMock
-    //         .Setup(o => o["MdsSettings:JwtSettings:Issuer"])
-    //         .Returns((string key) => TestConstants.TestJwtIssuer);
-    //     _settingsMock
-    //         .Setup(o => o["MdsSettings:BypassUserActivation"])
-    //         .Returns((string key) => "True");
-    //     using var client = _factory.CreateClient();
-    //
-    //     var userDetails = await UserHelpers.CreateTestUser(client);
-    //     using (var session = _dbBuilder.TestDbSessionFactory.OpenSession())
-    //     using (var transaction = session.BeginTransaction())
-    //     {
-    //         var account = session
-    //             .Query<Account>()
-    //             .First(e => e.Id.ToString() == userDetails.AccountId);
-    //         account.IsActive = false;
-    //         await session.SaveOrUpdateAsync(account);
-    //         await transaction.CommitAsync();
-    //     }
-    //
-    //     // Act
-    //     var adminAuthToken = await GetAdminAuthToken(client);
-    //     var response = await TestHttpRequestFactory.MakeRequest(
-    //         client,
-    //         new CreateRequestArgs
-    //         {
-    //             Content = TestHttpRequestFactory.CreateJsonContent(
-    //                 new ImpersonationRequestBody() { AccountId = userDetails.AccountId }
-    //             ),
-    //             Url = "/v1/impersonate",
-    //             HttpMethod = HttpMethod.Post,
-    //             AllowSelfSignCert = true,
-    //             AuthToken = adminAuthToken,
-    //         }
-    //     );
-    //
-    //     // Assert
-    //     Assert.Equal(HttpStatusCode.BadRequest, response?.StatusCode);
-    //     Assert.Contains(
-    //         "Could not find account, user, or insufficient privilege to impersonate",
-    //         response?.Content.ReadAsStringAsync().Result
-    //     );
-    // }
-    //
-    // [Fact(DisplayName = "POST when requesting user does not exist returns bad request")]
-    // public async Task POST_When_requesting_user_that_does_not_exist_returns_bad_request()
-    // {
-    //     // Arrange
-    //     _fileMock
-    //         .Setup(o => o.ReadAllText(It.Is<string>(x => x.EndsWith("key"))))
-    //         .Returns(TestConstants.TestPrivateKeyData);
-    //     _fileMock
-    //         .Setup(o => o.ReadAllText(It.Is<string>(x => x.EndsWith("key.pub.pem"))))
-    //         .Returns(TestConstants.TestPublicPemData);
-    //     _settingsMock
-    //         .Setup(o => o["MdsSettings:Secrets:PrivatePath"])
-    //         .Returns((string key) => "/some/path/to/key");
-    //     _settingsMock
-    //         .Setup(o => o["MdsSettings:Secrets:PrivatePassword"])
-    //         .Returns((string key) => TestConstants.TestPrivateKeyPassword);
-    //     _settingsMock
-    //         .Setup(o => o["MdsSettings:Secrets:PublicPath"])
-    //         .Returns((string key) => "/some/path/to/key.pub.pem");
-    //     _settingsMock
-    //         .Setup(o => o["MdsSettings:JwtSettings:Audience"])
-    //         .Returns((string key) => TestConstants.TestJwtIssuer);
-    //     _settingsMock
-    //         .Setup(o => o["MdsSettings:JwtSettings:Issuer"])
-    //         .Returns((string key) => TestConstants.TestJwtIssuer);
-    //     _settingsMock
-    //         .Setup(o => o["MdsSettings:BypassUserActivation"])
-    //         .Returns((string key) => "True");
-    //     using var client = _factory.CreateClient();
-    //     var userDetails = await UserHelpers.CreateTestUser(client);
-    //
-    //     // Act
-    //     var adminAuthToken = await GetAdminAuthToken(client);
-    //     var response = await TestHttpRequestFactory.MakeRequest(
-    //         client,
-    //         new CreateRequestArgs
-    //         {
-    //             Content = TestHttpRequestFactory.CreateJsonContent(
-    //                 new ImpersonationRequestBody()
-    //                 {
-    //                     AccountId = userDetails.AccountId,
-    //                     UserId = "DOES_NOT_EXIST"
-    //                 }
-    //             ),
-    //             Url = "/v1/impersonate",
-    //             HttpMethod = HttpMethod.Post,
-    //             AllowSelfSignCert = true,
-    //             AuthToken = adminAuthToken,
-    //         }
-    //     );
-    //
-    //     // Assert
-    //     Assert.Equal(HttpStatusCode.BadRequest, response?.StatusCode);
-    //     Assert.Contains(
-    //         "Could not find account, user, or insufficient privilege to impersonate",
-    //         response?.Content.ReadAsStringAsync().Result
-    //     );
-    // }
-    //
-    // [Fact(DisplayName = "POST when requesting user that is inactive returns bad request")]
-    // public async Task POST_When_requesting_user_that_is_inactive_returns_bad_request()
-    // {
-    //     // Arrange
-    //     _fileMock
-    //         .Setup(o => o.ReadAllText(It.Is<string>(x => x.EndsWith("key"))))
-    //         .Returns(TestConstants.TestPrivateKeyData);
-    //     _fileMock
-    //         .Setup(o => o.ReadAllText(It.Is<string>(x => x.EndsWith("key.pub.pem"))))
-    //         .Returns(TestConstants.TestPublicPemData);
-    //     _settingsMock
-    //         .Setup(o => o["MdsSettings:Secrets:PrivatePath"])
-    //         .Returns((string key) => "/some/path/to/key");
-    //     _settingsMock
-    //         .Setup(o => o["MdsSettings:Secrets:PrivatePassword"])
-    //         .Returns((string key) => TestConstants.TestPrivateKeyPassword);
-    //     _settingsMock
-    //         .Setup(o => o["MdsSettings:Secrets:PublicPath"])
-    //         .Returns((string key) => "/some/path/to/key.pub.pem");
-    //     _settingsMock
-    //         .Setup(o => o["MdsSettings:JwtSettings:Audience"])
-    //         .Returns((string key) => TestConstants.TestJwtIssuer);
-    //     _settingsMock
-    //         .Setup(o => o["MdsSettings:JwtSettings:Issuer"])
-    //         .Returns((string key) => TestConstants.TestJwtIssuer);
-    //     _settingsMock
-    //         .Setup(o => o["MdsSettings:BypassUserActivation"])
-    //         .Returns((string key) => "True");
-    //     using var client = _factory.CreateClient();
-    //
-    //     var userDetails = await UserHelpers.CreateTestUser(client);
-    //     using (var session = _dbBuilder.TestDbSessionFactory.OpenSession())
-    //     using (var transaction = session.BeginTransaction())
-    //     {
-    //         var user = session.Query<User>().First(e => e.Id == userDetails.UserName);
-    //         user.IsActive = false;
-    //         await session.SaveOrUpdateAsync(user);
-    //         await transaction.CommitAsync();
-    //     }
-    //
-    //     // Act
-    //     var adminAuthToken = await GetAdminAuthToken(client);
-    //     var response = await TestHttpRequestFactory.MakeRequest(
-    //         client,
-    //         new CreateRequestArgs
-    //         {
-    //             Content = TestHttpRequestFactory.CreateJsonContent(
-    //                 new ImpersonationRequestBody() { AccountId = userDetails.AccountId }
-    //             ),
-    //             Url = "/v1/impersonate",
-    //             HttpMethod = HttpMethod.Post,
-    //             AllowSelfSignCert = true,
-    //             AuthToken = adminAuthToken,
-    //         }
-    //     );
-    //
-    //     // Assert
-    //     Assert.Equal(HttpStatusCode.BadRequest, response?.StatusCode);
-    //     Assert.Contains(
-    //         "Could not find account, user, or insufficient privilege to impersonate",
-    //         response?.Content.ReadAsStringAsync().Result
-    //     );
-    // }
 }

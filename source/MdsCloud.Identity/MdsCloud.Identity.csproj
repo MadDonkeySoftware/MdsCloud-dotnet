@@ -32,4 +32,8 @@
     <ProjectReference Include="..\MdsCloud.Common.NHibernate\MdsCloud.Common.NHibernate.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Infrastructure\" />
+  </ItemGroup>
+
 </Project>

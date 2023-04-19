@@ -1,7 +1,7 @@
 using System.IdentityModel.Tokens.Jwt;
 using MadDonkeySoftware.SystemWrappers.IO;
 using MdsCloud.Identity.Settings;
-using MdsCloud.Identity.Utils;
+using MdsCloud.Identity.UI.Utils;
 
 namespace MdsCloud.Identity.Test.TestHelpers;
 

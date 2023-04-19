@@ -1,14 +1,16 @@
 using System.Security.Cryptography;
 using MadDonkeySoftware.SystemWrappers.IO;
-using MdsCloud.Identity.Authentication;
-using MdsCloud.Identity.Authorization;
 using MdsCloud.Identity.Domain;
-using MdsCloud.Identity.Repo;
-using MdsCloud.Identity.Utils;
 using MdsCloud.Common.API.Logging;
 using MdsCloud.Common.API.Middleware;
-using MdsCloud.Identity.Domain.Enums;
+using MdsCloud.Identity.Business.Interfaces;
+using MdsCloud.Identity.Business.Services;
+using MdsCloud.Identity.Domain.Lookups;
+using MdsCloud.Identity.Infrastructure.Repo;
 using MdsCloud.Identity.Settings;
+using MdsCloud.Identity.UI.Authentication;
+using MdsCloud.Identity.UI.Authorization;
+using MdsCloud.Identity.UI.Utils;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using NHibernate;
 
@@ -109,7 +111,7 @@ Task InitializeSystemData(WebApplication? app, IConfiguration config, int attemp
                 new LandscapeUrl(
                     LandscapeUrlScopes.Internal,
                     LandscapeUrlKeys.IdentityUrl,
-                    "https://mds-identity:8888"
+                    "http://mds-identity:8888"
                 )
             );
             session.SaveOrUpdate(
@@ -130,21 +132,21 @@ Task InitializeSystemData(WebApplication? app, IConfiguration config, int attemp
                 new LandscapeUrl(
                     LandscapeUrlScopes.Internal,
                     LandscapeUrlKeys.FsUrl,
-                    "https://mds-fs:8888"
+                    "http://mds-fs:8888"
                 )
             );
             session.SaveOrUpdate(
                 new LandscapeUrl(
                     LandscapeUrlScopes.Internal,
                     LandscapeUrlKeys.SfUrl,
-                    "https://mds-sf:8888"
+                    "http://mds-sf:8888"
                 )
             );
             session.SaveOrUpdate(
                 new LandscapeUrl(
                     LandscapeUrlScopes.Internal,
                     LandscapeUrlKeys.SmUrl,
-                    "https://mds-sm:8888"
+                    "http://mds-sm:8888"
                 )
             );
             session.SaveOrUpdate(
@@ -206,7 +208,32 @@ var configRoot = new ConfigurationBuilder()
     .AddJsonFile("appsettings.Production.json", true, false)
     .Build();
 var settingsRoot = new Settings(configRoot);
-var requestUtilities = new RequestUtilities(settingsRoot, new FileWrapper());
+
+void InitializeSystemServices(WebApplicationBuilder builder)
+{
+    var nhibernateSessionFactory = CreateSessionFactory(builder.Configuration);
+
+    // Infrastructure style items
+    builder.Services.AddSingleton<ILogger>(
+        _ =>
+            LoggerFactory
+                .Create(config =>
+                {
+                    config.AddConsole();
+                })
+                .CreateLogger<ILogger>()
+    );
+    builder.Services.AddSingleton<ISettings>(settingsRoot);
+    builder.Services.AddSingleton<IFile, FileWrapper>();
+    builder.Services.AddSingleton<IRequestUtilities, RequestUtilities>();
+    builder.Services.AddSingleton<ISessionFactory>(nhibernateSessionFactory);
+
+    // Services
+    builder.Services.AddScoped<IAccountService, AccountService>();
+    builder.Services.AddScoped<ITokenService, TokenService>();
+    builder.Services.AddScoped<IConfigurationService, ConfigurationService>();
+    builder.Services.AddScoped<IUserService, UserService>();
+}
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -215,12 +242,7 @@ builder.Services.AddSwaggerGen(sg =>
     sg.EnableAnnotations();
 });
 
-var nhibernateSessionFactory = CreateSessionFactory(builder.Configuration);
-
-builder.Services.AddSingleton<ISettings>(settingsRoot);
-builder.Services.AddSingleton<IRequestUtilities>(requestUtilities);
-builder.Services.AddSingleton<ISessionFactory>(nhibernateSessionFactory);
-builder.Services.AddSingleton<IFile>(new FileWrapper());
+InitializeSystemServices(builder);
 
 // Add services to the container.
 
