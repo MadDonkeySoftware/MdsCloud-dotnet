@@ -1,49 +1,49 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Security.Cryptography;
+using System.Transactions;
 using MadDonkeySoftware.SystemWrappers.IO;
 using MdsCloud.Common.API.Logging;
 using MdsCloud.Identity.Business.DTOs;
 using MdsCloud.Identity.Business.Exceptions;
 using MdsCloud.Identity.Business.Interfaces;
 using MdsCloud.Identity.Business.Utils;
-using MdsCloud.Identity.Domain;
+using MdsCloud.Identity.Infrastructure.Repositories;
 using MdsCloud.Identity.Settings;
 using Microsoft.IdentityModel.Tokens;
-using NHibernate;
 
 namespace MdsCloud.Identity.Business.Services;
 
 public class TokenService : ITokenService
 {
     private readonly ILogger _logger;
-    private readonly ISessionFactory _sessionFactory;
+    private readonly IAccountRepository _accountRepository;
+    private readonly IUserRepository _userRepository;
     private readonly ISettings _settings;
     private readonly IFile _file;
 
     public TokenService(
         ILogger logger,
-        ISessionFactory sessionFactory,
+        IAccountRepository accountRepository,
+        IUserRepository userRepository,
         ISettings settings,
         IFile file
     )
     {
         _logger = logger;
-        _sessionFactory = sessionFactory;
+        _accountRepository = accountRepository;
+        _userRepository = userRepository;
         _settings = settings;
         _file = file;
     }
 
     public string GenerateUserToken(ArgsWithTrace<GenerateUserTokenArgs> tokenRequest)
     {
-        using var session = _sessionFactory.OpenSession();
-        using var transaction = session.BeginTransaction();
-
         long parsedAccountId = long.TryParse(tokenRequest.Data.AccountId, out parsedAccountId)
             ? parsedAccountId
             : 0;
-        var account = session.Query<Account>().FirstOrDefault(e => e.Id == parsedAccountId);
-        var user = session.Query<User>().FirstOrDefault(e => e.Id == tokenRequest.Data.UserId);
+        var account = _accountRepository.GetById(parsedAccountId);
+        var user = _userRepository.GetById(tokenRequest.Data.UserId);
 
         if (account == null)
         {
@@ -108,8 +108,10 @@ public class TokenService : ITokenService
             )
         );
         user.LastActivity = DateTime.UtcNow;
-        session.SaveOrUpdate(user);
-        transaction.Commit();
+
+        using var transaction = new TransactionScope();
+        _userRepository.SaveUser(user);
+        transaction.Complete();
 
         _logger.LogWithMetadata(
             LogLevel.Debug,
@@ -129,7 +131,7 @@ public class TokenService : ITokenService
             throw new ArgumentException("RequestingUserJwt cannot be null");
         }
 
-        using var session = _sessionFactory.OpenSession();
+        // using var session = _sessionFactory.OpenSession();
         var jwt = impersonationRequest.Data.RequestingUserJwt;
         var accountId = jwt.Claims.First(c => c.Type == "accountId").Value;
         var userId = jwt.Claims.First(c => c.Type == "userId").Value;
@@ -148,7 +150,7 @@ public class TokenService : ITokenService
         )
             ? parsedAccountId
             : -1;
-        var account = session.Query<Account>().FirstOrDefault(e => e.Id == parsedAccountId);
+        var account = _accountRepository.GetById(parsedAccountId);
         if (account == null)
         {
             throw new AccountDoesNotExistException();
@@ -158,9 +160,10 @@ public class TokenService : ITokenService
             throw new AccountInactiveException();
         }
 
-        var userIdToSearchFor =
-            impersonationRequest.Data.UserId ?? account.Users.First(u => u.IsPrimary).Id;
-        var user = session.Query<User>().FirstOrDefault(e => e.Id == userIdToSearchFor);
+        var user =
+            impersonationRequest.Data.UserId != null
+                ? _userRepository.GetById(impersonationRequest.Data.UserId)
+                : _userRepository.GetPrimaryUser(account.Id);
 
         if (user == null)
         {

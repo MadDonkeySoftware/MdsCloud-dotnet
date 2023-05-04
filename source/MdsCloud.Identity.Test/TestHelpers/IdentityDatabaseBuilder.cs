@@ -1,9 +1,7 @@
 using FluentMigrator.Runner;
 using MdsCloud.DbTooling.Commands;
-using MdsCloud.Identity.Infrastructure.Repo;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using NHibernate;
 using Npgsql;
 
 namespace MdsCloud.Identity.Test.TestHelpers;
@@ -11,10 +9,9 @@ namespace MdsCloud.Identity.Test.TestHelpers;
 public class IdentityDatabaseBuilder : IDisposable
 {
     public string TestDbConnectionString { get; private set; }
-    public ISessionFactory? TestDbSessionFactory { get; private set; }
     private NpgsqlDataSource? DataSource { get; set; }
     private string RootConnectionString { get; set; }
-    private string DbName { get; set; }
+    public string DbName { get; private set; }
 
     ~IdentityDatabaseBuilder()
     {
@@ -50,15 +47,6 @@ public class IdentityDatabaseBuilder : IDisposable
         var runner = services.GetRequiredService<IMigrationRunner>();
         var migrationTask = Task.Run(() => runner.MigrateUp());
 
-        var fluentConfig = NhibernateConfigGenerator.Generate(
-            config,
-            new Dictionary<string, string>
-            {
-                { "DBConnection", TestDbConnectionString },
-                { "DeveloperSettings:ShowSql", "False" }
-            }
-        );
-        TestDbSessionFactory = fluentConfig.BuildSessionFactory();
         await migrationTask;
     }
 
@@ -80,7 +68,6 @@ public class IdentityDatabaseBuilder : IDisposable
     {
         if (disposing)
         {
-            TestDbSessionFactory?.Dispose();
             if (DataSource != null)
             {
                 Console.WriteLine($"Dropping database: {DbName}");

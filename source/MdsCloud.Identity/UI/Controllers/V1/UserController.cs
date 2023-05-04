@@ -2,15 +2,12 @@ using MdsCloud.Common.API.Logging;
 using MdsCloud.Identity.Business.DTOs;
 using MdsCloud.Identity.Business.Exceptions;
 using MdsCloud.Identity.Business.Interfaces;
-using MdsCloud.Identity.Business.Services;
-using MdsCloud.Identity.Domain;
 using MdsCloud.Identity.UI.Authorization;
 using MdsCloud.Identity.UI.DTOs;
 using MdsCloud.Identity.UI.DTOs.User;
 using MdsCloud.Identity.UI.Utils;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using NHibernate;
 using Swashbuckle.AspNetCore.Annotations;
 
 namespace MdsCloud.Identity.UI.Controllers.V1;
@@ -22,19 +19,16 @@ namespace MdsCloud.Identity.UI.Controllers.V1;
 public class UserController : ControllerBase
 {
     private readonly ILogger<UserController> _logger;
-    private readonly ISessionFactory _sessionFactory;
     private readonly IRequestUtilities _requestUtilities;
     private readonly IUserService _userService;
 
     public UserController(
         ILogger<UserController> logger,
-        ISessionFactory sessionFactory,
         IRequestUtilities requestUtilities,
         IUserService userService
     )
     {
         _logger = logger;
-        _sessionFactory = sessionFactory;
         _requestUtilities = requestUtilities;
         _userService = userService;
     }

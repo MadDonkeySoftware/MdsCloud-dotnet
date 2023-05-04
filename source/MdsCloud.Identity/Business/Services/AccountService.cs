@@ -1,36 +1,42 @@
+using System.Transactions;
 using MdsCloud.Common.API.Logging;
 using MdsCloud.Identity.Business.DTOs;
 using MdsCloud.Identity.Business.Exceptions;
 using MdsCloud.Identity.Business.Interfaces;
 using MdsCloud.Identity.Domain;
+using MdsCloud.Identity.Infrastructure.Repositories;
 using MdsCloud.Identity.Settings;
 using MdsCloud.Identity.UI.Utils;
-using NHibernate;
 
 namespace MdsCloud.Identity.Business.Services;
 
 public class AccountService : IAccountService
 {
     private readonly ILogger _logger;
-    private readonly ISessionFactory _sessionFactory;
+    private readonly IAccountRepository _accountRepository;
+    private readonly IUserRepository _userRepository;
     private readonly ISettings _settings;
 
-    public AccountService(ILogger logger, ISessionFactory sessionFactory, ISettings settings)
+    public AccountService(
+        ILogger logger,
+        IAccountRepository accountRepository,
+        IUserRepository userRepository,
+        ISettings settings
+    )
     {
         _logger = logger;
-        _sessionFactory = sessionFactory;
+        _accountRepository = accountRepository;
+        _userRepository = userRepository;
         _settings = settings;
     }
 
     public long RegisterNewAccount(ArgsWithTrace<AccountRegistrationArgs> registrationRequest)
     {
-        using var session = _sessionFactory.OpenSession();
-        using var transaction = session.BeginTransaction();
-
-        var accountExists = session
-            .Query<Account>()
-            .Any(e => e.Name == registrationRequest.Data.AccountName);
-        var userExists = session.Query<User>().Any(e => e.Id == registrationRequest.Data.UserId);
+        using var transaction = new TransactionScope();
+        var accountExists = _accountRepository.AccountWithNameExists(
+            registrationRequest.Data.AccountName
+        );
+        var userExists = _userRepository.UserWithNameExists(registrationRequest.Data.UserId);
 
         if (accountExists)
         {
@@ -54,7 +60,6 @@ public class AccountService : IAccountService
         var newUser = new User
         {
             Id = registrationRequest.Data.UserId,
-            Account = newAccount,
             Created = DateTime.UtcNow,
             FriendlyName = registrationRequest.Data.FriendlyName,
             ActivationCode = bypassActivation ? null : RandomStringGenerator.GenerateString(32),
@@ -64,11 +69,10 @@ public class AccountService : IAccountService
             IsActive = bypassActivation,
         };
 
-        newAccount.Users.Add(newUser);
-
-        session.SaveOrUpdate(newAccount);
-        session.SaveOrUpdate(newUser);
-        transaction.Commit();
+        _accountRepository.SaveAccount(newAccount);
+        newUser.AccountId = newAccount.Id;
+        _userRepository.SaveUser(newUser);
+        transaction.Complete();
 
         _logger.LogWithMetadata(
             LogLevel.Debug,

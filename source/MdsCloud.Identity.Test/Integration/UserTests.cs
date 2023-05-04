@@ -1,6 +1,8 @@
 using System.Net;
+using Dapper;
 using MadDonkeySoftware.SystemWrappers.IO;
 using MdsCloud.Identity.Domain;
+using MdsCloud.Identity.Infrastructure.Repositories;
 using MdsCloud.Identity.Settings;
 using MdsCloud.Identity.Test.TestHelpers;
 using MdsCloud.Identity.UI.Controllers.V1;
@@ -45,6 +47,9 @@ public class UserTests : IDisposable, IClassFixture<IdentityDatabaseBuilder>
             services.AddSingleton<ISettings>(_settingsMock.Object);
             services.AddSingleton<IRequestUtilities>(_requestUtilitiesMock.Object);
             services.AddSingleton<ILogger<UserController>>(_logger.Object);
+            services.AddScoped<IConnectionFactory>(
+                provider => new ConnectionFactory(dbBuilder.TestDbConnectionString)
+            );
         };
     }
 
@@ -127,12 +132,14 @@ public class UserTests : IDisposable, IClassFixture<IdentityDatabaseBuilder>
         using var client = _factory.CreateClient();
         var userDetails = await UserHelpers.CreateTestUser(client);
 
-        string beforePassword;
-        using (var session = _dbBuilder.TestDbSessionFactory.OpenSession())
-        {
-            var user = session.Query<User>().First(e => e.Id == userDetails.UserName);
-            beforePassword = user.Password;
-        }
+        var connFactory = new ConnectionFactory(_dbBuilder.TestDbConnectionString);
+        var beforePassword = connFactory.WithConnection(
+            conn =>
+                conn.ExecuteScalar<string>(
+                    "SELECT password FROM \"user\" WHERE id = @id",
+                    new { id = userDetails.UserName }
+                )
+        );
 
         // Act
         var authToken = await GetAuthToken(
@@ -165,15 +172,20 @@ public class UserTests : IDisposable, IClassFixture<IdentityDatabaseBuilder>
         Assert.Equal(HttpStatusCode.OK, response?.StatusCode);
         var body = response!.Content.ReadAsStringAsync().Result;
         Assert.Equal(string.Empty, body);
-        using (var session = _dbBuilder.TestDbSessionFactory.OpenSession())
+        connFactory.WithConnection(conn =>
         {
-            var user = session.Query<User>().First(e => e.Id == userDetails.UserName);
+            var user = conn.QueryFirst<User>(
+                "SELECT * FROM \"user\" WHERE id = @id",
+                new { id = userDetails.UserName }
+            );
             var afterPassword = user.Password;
 
             Assert.NotEqual(beforePassword, afterPassword);
             Assert.Equal("new@testing.local", user.Email);
             Assert.Equal("New FriendlyName", user.FriendlyName);
-        }
+
+            return 0;
+        });
     }
 
     [Fact(DisplayName = "POST when old password incorrect fails updating the user")]

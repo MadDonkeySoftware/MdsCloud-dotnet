@@ -3,14 +3,20 @@ namespace MdsCloud.Identity.Domain;
 
 public class Account
 {
-    public Account()
+    public virtual void SetId(long id)
     {
-        Users = new List<User>();
+        if (Id == 0)
+        {
+            Id = id;
+        }
+        else
+        {
+            throw new InvalidOperationException("Id cannot be updated once it has a value");
+        }
     }
 
     public virtual long Id { get; protected set; }
     public virtual string Name { get; set; } = "";
-    public virtual IList<User> Users { get; set; }
     public virtual bool IsActive { get; set; }
     public virtual DateTime Created { get; set; }
     public virtual DateTime? LastActivity { get; set; }

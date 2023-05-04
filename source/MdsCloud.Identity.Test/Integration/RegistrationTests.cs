@@ -1,5 +1,8 @@
 using System.Net;
+using System.Transactions;
+using Dapper;
 using MdsCloud.Identity.Domain;
+using MdsCloud.Identity.Infrastructure.Repositories;
 using MdsCloud.Identity.Settings;
 using MdsCloud.Identity.Test.TestHelpers;
 using MdsCloud.Identity.UI.DTOs.Registration;
@@ -7,6 +10,7 @@ using MdsCloud.Identity.UI.Utils;
 using Microsoft.Extensions.DependencyInjection;
 using Moq;
 using Newtonsoft.Json;
+using Npgsql;
 
 namespace MdsCloud.Identity.Test.Integration;
 
@@ -30,6 +34,9 @@ public class RegistrationTests : IDisposable, IClassFixture<IdentityDatabaseBuil
         {
             services.AddSingleton<ISettings>(_settingsMock.Object);
             services.AddSingleton<IRequestUtilities>(_requestUtilitiesMock.Object);
+            services.AddScoped<IConnectionFactory>(
+                provider => new ConnectionFactory(dbBuilder.TestDbConnectionString)
+            );
         };
     }
 
@@ -88,9 +95,13 @@ public class RegistrationTests : IDisposable, IClassFixture<IdentityDatabaseBuil
         );
         Assert.NotEmpty(body!.AccountId!);
 
-        using var session = _dbBuilder.TestDbSessionFactory.OpenSession();
-        using var transaction = session.BeginTransaction();
-        var user = session.Query<User>().First(e => e.Id == testUsername);
+        // var user = session.Query<User>().First(e => e.Id == testUsername);
+        await using var dbConn = new NpgsqlConnection(_dbBuilder.TestDbConnectionString);
+        dbConn.Open();
+        var user = dbConn.QueryFirst<User>(
+            "SELECT * FROM \"user\" WHERE id = @id",
+            new { id = testUsername }
+        );
 
         Assert.False(user.IsActive);
         Assert.NotNull(user.ActivationCode);
@@ -140,9 +151,16 @@ public class RegistrationTests : IDisposable, IClassFixture<IdentityDatabaseBuil
         );
         Assert.NotEmpty(body!.AccountId!);
 
-        using var session = _dbBuilder.TestDbSessionFactory.OpenSession();
-        using var transaction = session.BeginTransaction();
-        var user = session.Query<User>().First(e => e.Id == testUsername);
+        await using var dbConn = new NpgsqlConnection(_dbBuilder.TestDbConnectionString);
+        dbConn.Open();
+        var foo = dbConn.QueryFirst<dynamic>(
+            "SELECT * FROM \"user\" WHERE id = @id",
+            new { id = testUsername }
+        );
+        var user = dbConn.QueryFirst<User>(
+            "SELECT * FROM \"user\" WHERE id = @id",
+            new { id = testUsername }
+        );
 
         Assert.True(user.IsActive);
         Assert.Null(user.ActivationCode);
@@ -193,10 +211,16 @@ public class RegistrationTests : IDisposable, IClassFixture<IdentityDatabaseBuil
         var body = response!.Content.ReadAsStringAsync().Result;
         Assert.Contains("Invalid accountName or userName", body);
 
-        using var session = _dbBuilder.TestDbSessionFactory.OpenSession();
-        using var transaction = session.BeginTransaction();
-        var existingUserCount = session.Query<User>().Count(e => e.Id == testUsername);
-        var existingAccountCount = session.Query<Account>().Count(e => e.Name == accountName);
+        await using var dbConn = new NpgsqlConnection(_dbBuilder.TestDbConnectionString);
+        dbConn.Open();
+        var existingUserCount = dbConn.ExecuteScalar<int>(
+            "SELECT COUNT(1) FROM \"user\" WHERE id = @id",
+            new { id = testUsername }
+        );
+        var existingAccountCount = dbConn.ExecuteScalar<int>(
+            "SELECT COUNT(1) FROM account WHERE name = @name",
+            new { name = accountName }
+        );
 
         Assert.Equal(1, existingUserCount);
         Assert.Equal(0, existingAccountCount);
@@ -247,10 +271,17 @@ public class RegistrationTests : IDisposable, IClassFixture<IdentityDatabaseBuil
         var body = response!.Content.ReadAsStringAsync().Result;
         Assert.Contains("Invalid accountName or userName", body);
 
-        using var session = _dbBuilder.TestDbSessionFactory.OpenSession();
-        using var transaction = session.BeginTransaction();
-        var existingUserCount = session.Query<User>().Count(e => e.Id == testUsername);
-        var existingAccountCount = session.Query<Account>().Count(e => e.Name == accountName);
+        using var transaction = new TransactionScope();
+        await using var dbConn = new NpgsqlConnection(_dbBuilder.TestDbConnectionString);
+        dbConn.Open();
+        var existingUserCount = dbConn.ExecuteScalar<int>(
+            "SELECT COUNT(1) FROM \"user\" WHERE id = @id",
+            new { id = testUsername }
+        );
+        var existingAccountCount = dbConn.ExecuteScalar<int>(
+            "SELECT COUNT(1) FROM account WHERE name = @name",
+            new { name = accountName }
+        );
 
         Assert.Equal(0, existingUserCount);
         Assert.Equal(1, existingAccountCount);
@@ -297,10 +328,16 @@ public class RegistrationTests : IDisposable, IClassFixture<IdentityDatabaseBuil
         var body = response!.Content.ReadAsStringAsync().Result;
         Assert.Contains("The FriendlyName field is required", body);
 
-        using var session = _dbBuilder.TestDbSessionFactory.OpenSession();
-        using var transaction = session.BeginTransaction();
-        var existingUserCount = session.Query<User>().Count(e => e.Id == testUsername);
-        var existingAccountCount = session.Query<Account>().Count(e => e.Name == accountName);
+        await using var dbConn = new NpgsqlConnection(_dbBuilder.TestDbConnectionString);
+        dbConn.Open();
+        var existingUserCount = dbConn.ExecuteScalar<int>(
+            "SELECT COUNT(1) FROM \"user\" WHERE id = @id",
+            new { id = testUsername }
+        );
+        var existingAccountCount = dbConn.ExecuteScalar<int>(
+            "SELECT COUNT(1) FROM account WHERE name = @name",
+            new { name = accountName }
+        );
 
         Assert.Equal(0, existingUserCount);
         Assert.Equal(0, existingAccountCount);

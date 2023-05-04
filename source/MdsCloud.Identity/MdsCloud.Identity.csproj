@@ -8,8 +8,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="FluentMigrator" Version="3.3.2" />
-    <PackageReference Include="FluentNHibernate" Version="3.1.0" />
+    <PackageReference Include="Dapper" Version="2.0.123" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="7.0.4" />
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="7.0.4" />
     <PackageReference Include="Npgsql" Version="7.0.2" />
@@ -29,11 +28,10 @@
 
   <ItemGroup>
     <ProjectReference Include="..\MdsCloud.Common.API\MdsCloud.Common.API.csproj" />
-    <ProjectReference Include="..\MdsCloud.Common.NHibernate\MdsCloud.Common.NHibernate.csproj" />
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Infrastructure\" />
+    <Folder Include="Domain\Interfaces\" />
   </ItemGroup>
 
 </Project>

@@ -1,7 +1,6 @@
 using MdsCloud.Common.API.Logging;
 using MdsCloud.Identity.Business.DTOs;
 using MdsCloud.Identity.Business.Interfaces;
-using MdsCloud.Identity.Business.Services;
 using MdsCloud.Identity.Domain.Lookups;
 using MdsCloud.Identity.UI.Authorization;
 using MdsCloud.Identity.UI.DTOs;
@@ -9,7 +8,6 @@ using MdsCloud.Identity.UI.DTOs.Configuration;
 using MdsCloud.Identity.UI.Utils;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using NHibernate;
 using Swashbuckle.AspNetCore.Annotations;
 
 namespace MdsCloud.Identity.UI.Controllers.V1;
@@ -20,18 +18,15 @@ namespace MdsCloud.Identity.UI.Controllers.V1;
 [Produces("application/json")]
 public class ConfigurationController : MdsControllerBase<ConfigurationController>
 {
-    private readonly ISessionFactory _sessionFactory;
     private readonly IConfigurationService _configurationService;
 
     public ConfigurationController(
         ILogger<ConfigurationController> logger,
         IRequestUtilities requestUtilities,
-        ISessionFactory sessionFactory,
         IConfigurationService configurationService
     )
         : base(logger, requestUtilities)
     {
-        _sessionFactory = sessionFactory;
         _configurationService = configurationService;
     }
 

@@ -17,8 +17,6 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MdsCloud.SdkDotNet.Test", "
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MdsCloud.Common.API", "source\MdsCloud.Common.API\MdsCloud.Common.API.csproj", "{D28EEC21-D995-4239-8576-234F0F1BC1D4}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MdsCloud.Common.NHibernate", "source\MdsCloud.Common.NHibernate\MdsCloud.Common.NHibernate.csproj", "{9A1BE780-DBB6-4CB2-99E6-E7A9628C9942}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -56,9 +54,5 @@ Global
 		{D28EEC21-D995-4239-8576-234F0F1BC1D4}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{D28EEC21-D995-4239-8576-234F0F1BC1D4}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{D28EEC21-D995-4239-8576-234F0F1BC1D4}.Release|Any CPU.Build.0 = Release|Any CPU
-		{9A1BE780-DBB6-4CB2-99E6-E7A9628C9942}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{9A1BE780-DBB6-4CB2-99E6-E7A9628C9942}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{9A1BE780-DBB6-4CB2-99E6-E7A9628C9942}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{9A1BE780-DBB6-4CB2-99E6-E7A9628C9942}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

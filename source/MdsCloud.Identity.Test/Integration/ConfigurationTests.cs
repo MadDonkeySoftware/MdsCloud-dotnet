@@ -1,5 +1,6 @@
 using System.Net;
 using MadDonkeySoftware.SystemWrappers.IO;
+using MdsCloud.Identity.Infrastructure.Repositories;
 using MdsCloud.Identity.Settings;
 using MdsCloud.Identity.Test.TestHelpers;
 using MdsCloud.Identity.UI.Controllers.V1;
@@ -10,25 +11,30 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Moq;
 using Newtonsoft.Json;
+using Xunit.Abstractions;
 
 namespace MdsCloud.Identity.Test.Integration;
 
 public class ConfigurationTests : IDisposable, IClassFixture<IdentityDatabaseBuilder>
 {
     private readonly IdentityWebApplicationFactory _factory;
+    private readonly ITestOutputHelper _output;
 
     private readonly Mock<IFile> _fileMock = new();
     private readonly Mock<ISettings> _settingsMock = new();
     private readonly Mock<IRequestUtilities> _requestUtilitiesMock = new();
     private readonly Mock<ILogger<UserController>> _logger = new();
 
-    public ConfigurationTests()
+    public ConfigurationTests(ITestOutputHelper output)
     {
+        _output = output;
         var dbBuilder = new IdentityDatabaseBuilder();
         dbBuilder.Initialize().Wait();
 
         _factory = new IdentityWebApplicationFactory();
         _factory.DbConnectionString = dbBuilder.TestDbConnectionString;
+
+        _output.WriteLine("DbName: " + dbBuilder.DbName);
 
         var testRequestUtilities = new TestRequestUtilities(_settingsMock.Object, _fileMock.Object);
         _requestUtilitiesMock
@@ -41,6 +47,9 @@ public class ConfigurationTests : IDisposable, IClassFixture<IdentityDatabaseBui
             services.AddSingleton<ISettings>(_settingsMock.Object);
             services.AddSingleton<IRequestUtilities>(_requestUtilitiesMock.Object);
             services.AddSingleton<ILogger<UserController>>(_logger.Object);
+            services.AddScoped<IConnectionFactory>(
+                provider => new ConnectionFactory(dbBuilder.TestDbConnectionString)
+            );
         };
     }
 

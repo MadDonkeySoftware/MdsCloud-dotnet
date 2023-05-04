@@ -1,22 +1,22 @@
+using System.Transactions;
 using MdsCloud.Common.API.Logging;
 using MdsCloud.Identity.Business.DTOs;
 using MdsCloud.Identity.Business.Exceptions;
 using MdsCloud.Identity.Business.Interfaces;
 using MdsCloud.Identity.Business.Utils;
-using MdsCloud.Identity.Domain;
-using NHibernate;
+using MdsCloud.Identity.Infrastructure.Repositories;
 
 namespace MdsCloud.Identity.Business.Services;
 
 public class UserService : IUserService
 {
     private readonly ILogger _logger;
-    private readonly ISessionFactory _sessionFactory;
+    private readonly IUserRepository _userRepository;
 
-    public UserService(ILogger logger, ISessionFactory sessionFactory)
+    public UserService(ILogger logger, IUserRepository userRepository)
     {
         _logger = logger;
-        _sessionFactory = sessionFactory;
+        _userRepository = userRepository;
     }
 
     public void UpdateUserData(ArgsWithTrace<UpdateUserDataArgs> args)
@@ -26,13 +26,11 @@ public class UserService : IUserService
             throw new ArgumentException("RequestingUserJwt cannot be null");
         }
 
-        using var session = _sessionFactory.OpenSession();
-        using var transaction = session.BeginTransaction();
         var shouldUpdate = false;
         var jwt = args.Data.RequestingUserJwt;
 
         var userId = jwt.Claims.First(c => c.Type == "userId").Value;
-        var user = session.Query<User>().First(u => u.Id == userId);
+        var user = _userRepository.GetById(userId);
 
         if (
             args.Data.OldPassword != null
@@ -67,8 +65,12 @@ public class UserService : IUserService
         }
 
         user.LastModified = DateTime.UtcNow;
-        session.SaveOrUpdate(user);
-        transaction.Commit();
+        using (var transaction = new TransactionScope())
+        {
+            _userRepository.SaveUser(user);
+            transaction.Complete();
+        }
+
         _logger.LogWithMetadata(
             LogLevel.Debug,
             "Successfully updated user",

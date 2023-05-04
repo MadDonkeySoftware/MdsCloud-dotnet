@@ -1,4 +1,6 @@
 using System.Security.Cryptography;
+using System.Transactions;
+using Dapper;
 using MadDonkeySoftware.SystemWrappers.IO;
 using MdsCloud.Identity.Domain;
 using MdsCloud.Common.API.Logging;
@@ -6,13 +8,12 @@ using MdsCloud.Common.API.Middleware;
 using MdsCloud.Identity.Business.Interfaces;
 using MdsCloud.Identity.Business.Services;
 using MdsCloud.Identity.Domain.Lookups;
-using MdsCloud.Identity.Infrastructure.Repo;
+using MdsCloud.Identity.Infrastructure.Repositories;
 using MdsCloud.Identity.Settings;
 using MdsCloud.Identity.UI.Authentication;
 using MdsCloud.Identity.UI.Authorization;
 using MdsCloud.Identity.UI.Utils;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-using NHibernate;
 
 Task InitializeSystemData(WebApplication? app, IConfiguration config, int attempts = 0)
 {
@@ -24,13 +25,15 @@ Task InitializeSystemData(WebApplication? app, IConfiguration config, int attemp
         }
 
         using var scope = app.Services.CreateScope();
-        var sessionFactory = scope.ServiceProvider.GetRequiredService<ISessionFactory>();
+        var accountRepository = scope.ServiceProvider.GetRequiredService<IAccountRepository>();
+        var userRepository = scope.ServiceProvider.GetRequiredService<IUserRepository>();
+        var landscapeUrlRepository =
+            scope.ServiceProvider.GetRequiredService<ILandscapeUrlRepository>();
 
         var logger = app.Logger;
-        using var session = sessionFactory.OpenSession();
-        using var transaction = session.BeginTransaction();
+        using var transaction = new TransactionScope();
 
-        var systemInitialized = session.Query<Account>().Any(e => e.Name == "System");
+        var systemInitialized = accountRepository.AccountWithNameExists("System");
         if (!systemInitialized)
         {
             var envPass = Environment.GetEnvironmentVariable("MDS_SYS_PASSWORD");
@@ -53,118 +56,61 @@ Task InitializeSystemData(WebApplication? app, IConfiguration config, int attemp
                 ActivationCode = null,
                 FriendlyName = "System",
             };
-            session.SaveOrUpdate(account);
-            user.Account = account;
-            session.SaveOrUpdate(user);
+            accountRepository.SaveAccount(account);
+            user.AccountId = account.Id;
+            userRepository.SaveUser(user);
 
-            session.SaveOrUpdate(
-                new LandscapeUrl(
+            var landscapeUrls = new List<LandscapeUrl>()
+            {
+                // External
+                new(
                     LandscapeUrlScopes.External,
                     LandscapeUrlKeys.IdentityUrl,
                     "https://127.0.0.1:8081"
-                )
-            );
-            session.SaveOrUpdate(
-                new LandscapeUrl(
-                    LandscapeUrlScopes.External,
-                    LandscapeUrlKeys.NsUrl,
-                    "http://127.0.0.1:8082"
-                )
-            );
-            session.SaveOrUpdate(
-                new LandscapeUrl(
-                    LandscapeUrlScopes.External,
-                    LandscapeUrlKeys.QsUrl,
-                    "http://127.0.0.1:8083"
-                )
-            );
-            session.SaveOrUpdate(
-                new LandscapeUrl(
-                    LandscapeUrlScopes.External,
-                    LandscapeUrlKeys.FsUrl,
-                    "http://127.0.0.1:8084"
-                )
-            );
-            session.SaveOrUpdate(
-                new LandscapeUrl(
-                    LandscapeUrlScopes.External,
-                    LandscapeUrlKeys.SfUrl,
-                    "http://127.0.0.1:8085"
-                )
-            );
-            session.SaveOrUpdate(
-                new LandscapeUrl(
-                    LandscapeUrlScopes.External,
-                    LandscapeUrlKeys.SmUrl,
-                    "http://127.0.0.1:8086"
-                )
-            );
-            session.SaveOrUpdate(
-                new LandscapeUrl(
+                ),
+                new(LandscapeUrlScopes.External, LandscapeUrlKeys.NsUrl, "http://127.0.0.1:8082"),
+                new(LandscapeUrlScopes.External, LandscapeUrlKeys.QsUrl, "http://127.0.0.1:8083"),
+                new(LandscapeUrlScopes.External, LandscapeUrlKeys.FsUrl, "http://127.0.0.1:8084"),
+                new(LandscapeUrlScopes.External, LandscapeUrlKeys.SfUrl, "http://127.0.0.1:8085"),
+                new(LandscapeUrlScopes.External, LandscapeUrlKeys.SmUrl, "http://127.0.0.1:8086"),
+                new(
                     LandscapeUrlScopes.External,
                     LandscapeUrlKeys.AllowSelfSignCert,
                     true.ToString()
-                )
-            );
-
-            session.SaveOrUpdate(
-                new LandscapeUrl(
+                ),
+                // Internal
+                new(
                     LandscapeUrlScopes.Internal,
                     LandscapeUrlKeys.IdentityUrl,
                     "http://mds-identity:8888"
-                )
-            );
-            session.SaveOrUpdate(
-                new LandscapeUrl(
-                    LandscapeUrlScopes.Internal,
-                    LandscapeUrlKeys.NsUrl,
-                    "http://mds-ns:8888"
-                )
-            );
-            session.SaveOrUpdate(
-                new LandscapeUrl(
-                    LandscapeUrlScopes.Internal,
-                    LandscapeUrlKeys.QsUrl,
-                    "http://mds-qs:8888"
-                )
-            );
-            session.SaveOrUpdate(
-                new LandscapeUrl(
-                    LandscapeUrlScopes.Internal,
-                    LandscapeUrlKeys.FsUrl,
-                    "http://mds-fs:8888"
-                )
-            );
-            session.SaveOrUpdate(
-                new LandscapeUrl(
-                    LandscapeUrlScopes.Internal,
-                    LandscapeUrlKeys.SfUrl,
-                    "http://mds-sf:8888"
-                )
-            );
-            session.SaveOrUpdate(
-                new LandscapeUrl(
-                    LandscapeUrlScopes.Internal,
-                    LandscapeUrlKeys.SmUrl,
-                    "http://mds-sm:8888"
-                )
-            );
-            session.SaveOrUpdate(
-                new LandscapeUrl(
+                ),
+                new(LandscapeUrlScopes.Internal, LandscapeUrlKeys.NsUrl, "http://mds-ns:8888"),
+                new(LandscapeUrlScopes.Internal, LandscapeUrlKeys.QsUrl, "http://mds-qs:8888"),
+                new(LandscapeUrlScopes.Internal, LandscapeUrlKeys.FsUrl, "http://mds-fs:8888"),
+                new(LandscapeUrlScopes.Internal, LandscapeUrlKeys.SfUrl, "http://mds-sf:8888"),
+                new(LandscapeUrlScopes.Internal, LandscapeUrlKeys.SmUrl, "http://mds-sm:8888"),
+                new(
                     LandscapeUrlScopes.Internal,
                     LandscapeUrlKeys.AllowSelfSignCert,
                     true.ToString()
                 )
-            );
+            };
+
+            foreach (var url in landscapeUrls)
+            {
+                landscapeUrlRepository.SaveLandscapeUrl(url);
+            }
 
             try
             {
-                transaction.Commit();
+                transaction.Complete();
                 logger.Log(LogLevel.Information, "System user created");
 
-                session
-                    .CreateSQLQuery($"ALTER SEQUENCE Account_PK_seq RESTART WITH 1001")
-                    .ExecuteUpdate();
+                var connFactory = scope.ServiceProvider.GetRequiredService<IConnectionFactory>();
+                connFactory.WithConnection(
+                    conn => conn.Execute($"ALTER SEQUENCE Account_PK_seq RESTART WITH 1001")
+                );
+
                 if (envPass == null)
                 {
                     logger.Log(
@@ -196,12 +142,6 @@ Task InitializeSystemData(WebApplication? app, IConfiguration config, int attemp
     return Task.CompletedTask;
 }
 
-ISessionFactory CreateSessionFactory(IConfiguration config)
-{
-    var fluentConfig = NhibernateConfigGenerator.Generate(config);
-    return fluentConfig.BuildSessionFactory();
-}
-
 var configRoot = new ConfigurationBuilder()
     .AddJsonFile("appsettings.json", false, false)
     .AddJsonFile("appsettings.Development.json", true, false)
@@ -211,8 +151,6 @@ var settingsRoot = new Settings(configRoot);
 
 void InitializeSystemServices(WebApplicationBuilder builder)
 {
-    var nhibernateSessionFactory = CreateSessionFactory(builder.Configuration);
-
     // Infrastructure style items
     builder.Services.AddSingleton<ILogger>(
         _ =>
@@ -226,7 +164,12 @@ void InitializeSystemServices(WebApplicationBuilder builder)
     builder.Services.AddSingleton<ISettings>(settingsRoot);
     builder.Services.AddSingleton<IFile, FileWrapper>();
     builder.Services.AddSingleton<IRequestUtilities, RequestUtilities>();
-    builder.Services.AddSingleton<ISessionFactory>(nhibernateSessionFactory);
+    builder.Services.AddScoped<IConnectionFactory>(
+        provider => new ConnectionFactory(configRoot.GetConnectionString("DBConnection"))
+    );
+    builder.Services.AddScoped<IAccountRepository, AccountRepository>();
+    builder.Services.AddScoped<ILandscapeUrlRepository, LandscapeUrlRepository>();
+    builder.Services.AddScoped<IUserRepository, UserRepository>();
 
     // Services
     builder.Services.AddScoped<IAccountService, AccountService>();

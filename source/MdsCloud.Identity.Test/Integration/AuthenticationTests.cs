@@ -1,6 +1,9 @@
 using System.Net;
+using System.Transactions;
+using Dapper;
 using MadDonkeySoftware.SystemWrappers.IO;
 using MdsCloud.Identity.Domain;
+using MdsCloud.Identity.Infrastructure.Repositories;
 using MdsCloud.Identity.Settings;
 using MdsCloud.Identity.Test.TestHelpers;
 using MdsCloud.Identity.UI.DTOs.Authentication;
@@ -33,6 +36,9 @@ public class AuthenticationTests : IDisposable, IClassFixture<IdentityDatabaseBu
             services.AddSingleton<IFile>(_fileMock.Object);
             services.AddSingleton<ISettings>(_settingsMock.Object);
             services.AddSingleton<IRequestUtilities>(_requestUtilitiesMock.Object);
+            services.AddScoped<IConnectionFactory>(
+                provider => new ConnectionFactory(dbBuilder.TestDbConnectionString)
+            );
         };
     }
 
@@ -157,13 +163,17 @@ public class AuthenticationTests : IDisposable, IClassFixture<IdentityDatabaseBu
 
         var userDetails = await UserHelpers.CreateTestUser(client);
 
-        using (var session = _dbBuilder.TestDbSessionFactory.OpenSession())
-        using (var transaction = session.BeginTransaction())
+        var connFactory = new ConnectionFactory(_dbBuilder.TestDbConnectionString);
+        using (var transaction = new TransactionScope())
         {
-            var user = session.Query<User>().First(e => e.Id == userDetails.UserName);
-            user.IsActive = false;
-            await session.SaveOrUpdateAsync(user);
-            await transaction.CommitAsync();
+            connFactory.WithConnection(
+                conn =>
+                    conn.Execute(
+                        "UPDATE \"user\" SET is_active = false WHERE id = @id",
+                        new { id = userDetails.UserName }
+                    )
+            );
+            transaction.Complete();
         }
 
         // Act
@@ -236,16 +246,17 @@ public class AuthenticationTests : IDisposable, IClassFixture<IdentityDatabaseBu
         using var client = _factory.CreateClient();
 
         var userDetails = await UserHelpers.CreateTestUser(client);
-
-        using (var session = _dbBuilder.TestDbSessionFactory.OpenSession())
-        using (var transaction = session.BeginTransaction())
+        var connFactory = new ConnectionFactory(_dbBuilder.TestDbConnectionString);
+        using (var transaction = new TransactionScope())
         {
-            var account = session
-                .Query<Account>()
-                .First(e => e.Id.ToString() == userDetails.AccountId);
-            account.IsActive = false;
-            await session.SaveOrUpdateAsync(account);
-            await transaction.CommitAsync();
+            connFactory.WithConnection(
+                conn =>
+                    conn.Execute(
+                        "UPDATE account SET is_active = false WHERE id = @id",
+                        new { id = long.Parse(userDetails.AccountId) }
+                    )
+            );
+            transaction.Complete();
         }
 
         // Act
@@ -286,15 +297,17 @@ public class AuthenticationTests : IDisposable, IClassFixture<IdentityDatabaseBu
 
         var userDetails = await UserHelpers.CreateTestUser(client);
 
-        using (var session = _dbBuilder.TestDbSessionFactory.OpenSession())
-        using (var transaction = session.BeginTransaction())
+        var connFactory = new ConnectionFactory(_dbBuilder.TestDbConnectionString);
+        using (var transaction = new TransactionScope())
         {
-            var account = session
-                .Query<Account>()
-                .First(e => e.Id.ToString() == userDetails.AccountId);
-            account.IsActive = false;
-            await session.SaveOrUpdateAsync(account);
-            await transaction.CommitAsync();
+            connFactory.WithConnection(
+                conn =>
+                    conn.Execute(
+                        "UPDATE account SET is_active = false WHERE id = @id",
+                        new { id = long.Parse(userDetails.AccountId) }
+                    )
+            );
+            transaction.Complete();
         }
 
         // Act

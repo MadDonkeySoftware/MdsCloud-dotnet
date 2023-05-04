@@ -1,25 +1,25 @@
 using System.Security.Principal;
 using System.Text.Encodings.Web;
 using MdsCloud.Identity.Domain;
+using MdsCloud.Identity.Infrastructure.Repositories;
 using MdsCloud.Identity.UI.Authorization;
 using MdsCloud.Identity.UI.Utils;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.Extensions.Options;
-using NHibernate;
 using ILoggerFactory = Microsoft.Extensions.Logging.ILoggerFactory;
 
 namespace MdsCloud.Identity.UI.Authentication;
 
 public class JwtAuthenticationHandler : AuthenticationHandler<JwtKeyAuthenticationOptions>
 {
-    private readonly IConfiguration _configuration;
     private readonly IRequestUtilities _requestUtilities;
-    private readonly ISessionFactory _sessionFactory;
+    private readonly IAccountRepository _accountRepository;
+    private readonly IUserRepository _userRepository;
 
     public JwtAuthenticationHandler(
-        IConfiguration configuration,
         IRequestUtilities requestUtilities,
-        ISessionFactory sessionFactory,
+        IAccountRepository accountRepository,
+        IUserRepository userRepository,
         IOptionsMonitor<JwtKeyAuthenticationOptions> options,
         ILoggerFactory logger,
         UrlEncoder encoder,
@@ -27,9 +27,9 @@ public class JwtAuthenticationHandler : AuthenticationHandler<JwtKeyAuthenticati
     )
         : base(options, logger, encoder, clock)
     {
-        _configuration = configuration;
         _requestUtilities = requestUtilities;
-        _sessionFactory = sessionFactory;
+        _accountRepository = accountRepository;
+        _userRepository = userRepository;
     }
 
     protected override async Task<AuthenticateResult> HandleAuthenticateAsync()
@@ -43,7 +43,6 @@ public class JwtAuthenticationHandler : AuthenticationHandler<JwtKeyAuthenticati
 
         try
         {
-            var session = _sessionFactory.OpenSession();
             var jwtValidatedToken = _requestUtilities.GetRequestJwt(headerAuthorization.ToString());
 
             var accountId = jwtValidatedToken.Claims.First(c => c.Type == "accountId").Value;
@@ -51,12 +50,8 @@ public class JwtAuthenticationHandler : AuthenticationHandler<JwtKeyAuthenticati
             var friendlyName = jwtValidatedToken.Claims.First(c => c.Type == "friendlyName").Value;
 
             var roles = new List<string> { Roles.User };
-            var user = session.Query<User>().First(u => u.Id == userId);
-
-            // NOTE: We cannot use the related Account object because postgres doesn't support MARS.
-            // As an annoying work around we pull the account directly.
-            var account = session.Query<Account>().First(u => u.Id == user.AccountId);
-            // await _identityContext.Entry(user).Reference(u => u.Account).LoadAsync();
+            var user = _userRepository.GetById(userId);
+            var account = _accountRepository.GetById(user.AccountId);
 
             if (user.AccountId.ToString() != accountId)
             {

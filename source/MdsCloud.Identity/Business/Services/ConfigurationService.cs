@@ -1,3 +1,4 @@
+using System.Transactions;
 using MadDonkeySoftware.SystemWrappers.IO;
 using MdsCloud.Common.API.Logging;
 using MdsCloud.Identity.Business.DTOs;
@@ -5,35 +6,34 @@ using MdsCloud.Identity.Business.Exceptions;
 using MdsCloud.Identity.Business.Interfaces;
 using MdsCloud.Identity.Domain;
 using MdsCloud.Identity.Domain.Lookups;
+using MdsCloud.Identity.Infrastructure.Repositories;
 using MdsCloud.Identity.Settings;
-using NHibernate;
 
 namespace MdsCloud.Identity.Business.Services;
 
 public class ConfigurationService : IConfigurationService
 {
     private readonly ILogger _logger;
-    private readonly ISessionFactory _sessionFactory;
+    private readonly ILandscapeUrlRepository _landscapeUrlRepository;
     private readonly ISettings _settings;
     private readonly IFile _file;
 
     public ConfigurationService(
         ILogger logger,
-        ISessionFactory sessionFactory,
+        ILandscapeUrlRepository landscapeUrlRepository,
         ISettings settings,
         IFile file
     )
     {
         _logger = logger;
-        _sessionFactory = sessionFactory;
+        _landscapeUrlRepository = landscapeUrlRepository;
         _settings = settings;
         _file = file;
     }
 
     public Configuration GetConfiguration(ArgWithTrace<string> requestArgs)
     {
-        using var session = _sessionFactory.OpenSession();
-        var elements = session.Query<LandscapeUrl>().Where(e => e.Scope == requestArgs.Arg);
+        var elements = _landscapeUrlRepository.GetLandscapeUrlsForScope(requestArgs.Arg);
         var config = new Configuration();
 
         foreach (var landscapeUrl in elements)
@@ -83,8 +83,7 @@ public class ConfigurationService : IConfigurationService
         );
 
         // TODO: Determine if request is from local address or external address
-        using var session = _sessionFactory.OpenSession();
-        using var transaction = session.BeginTransaction();
+        using var transaction = new TransactionScope();
 
         foreach (var set in args.Data)
         {
@@ -92,7 +91,7 @@ public class ConfigurationService : IConfigurationService
 
             if (config.AllowSelfSignCert.HasValue)
             {
-                session.SaveOrUpdate(
+                _landscapeUrlRepository.SaveLandscapeUrl(
                     new LandscapeUrl(
                         scope,
                         LandscapeUrlKeys.AllowSelfSignCert,
@@ -103,38 +102,49 @@ public class ConfigurationService : IConfigurationService
 
             if (config.IdentityUrl != null)
             {
-                session.SaveOrUpdate(
+                _landscapeUrlRepository.SaveLandscapeUrl(
                     new LandscapeUrl(scope, LandscapeUrlKeys.IdentityUrl, config.IdentityUrl)
                 );
             }
 
             if (config.FsUrl != null)
             {
-                session.SaveOrUpdate(new LandscapeUrl(scope, LandscapeUrlKeys.FsUrl, config.FsUrl));
+                _landscapeUrlRepository.SaveLandscapeUrl(
+                    new LandscapeUrl(scope, LandscapeUrlKeys.FsUrl, config.FsUrl)
+                );
             }
 
             if (config.NsUrl != null)
             {
-                session.SaveOrUpdate(new LandscapeUrl(scope, LandscapeUrlKeys.NsUrl, config.NsUrl));
+                _landscapeUrlRepository.SaveLandscapeUrl(
+                    new LandscapeUrl(scope, LandscapeUrlKeys.NsUrl, config.NsUrl)
+                );
             }
 
             if (config.QsUrl != null)
             {
-                session.SaveOrUpdate(new LandscapeUrl(scope, LandscapeUrlKeys.QsUrl, config.QsUrl));
+                _landscapeUrlRepository.SaveLandscapeUrl(
+                    new LandscapeUrl(scope, LandscapeUrlKeys.QsUrl, config.QsUrl)
+                );
             }
 
             if (config.SfUrl != null)
             {
-                session.SaveOrUpdate(new LandscapeUrl(scope, LandscapeUrlKeys.SfUrl, config.SfUrl));
+                _landscapeUrlRepository.SaveLandscapeUrl(
+                    new LandscapeUrl(scope, LandscapeUrlKeys.SfUrl, config.SfUrl)
+                );
             }
 
             if (config.SmUrl != null)
             {
-                session.SaveOrUpdate(new LandscapeUrl(scope, LandscapeUrlKeys.SmUrl, config.SmUrl));
+                _landscapeUrlRepository.SaveLandscapeUrl(
+                    new LandscapeUrl(scope, LandscapeUrlKeys.SmUrl, config.SmUrl)
+                );
             }
         }
 
-        transaction.Commit();
+        transaction.Complete();
+        transaction.Dispose();
     }
 
     public string GetPublicSignature()
