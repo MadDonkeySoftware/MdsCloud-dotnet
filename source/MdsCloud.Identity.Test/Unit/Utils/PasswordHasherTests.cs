@@ -1,4 +1,4 @@
-using MdsCloud.Identity.UI.Utils;
+using MdsCloud.Identity.Presentation.Utils;
 
 namespace MdsCloud.Identity.Test.Unit.Utils;
 

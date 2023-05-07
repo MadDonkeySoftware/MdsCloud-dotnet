@@ -1,5 +1,6 @@
 using Dapper;
-using MdsCloud.Identity.Domain;
+using MdsCloud.Identity.Core.Interfaces;
+using MdsCloud.Identity.Core.Model;
 
 namespace MdsCloud.Identity.Infrastructure.Repositories;
 

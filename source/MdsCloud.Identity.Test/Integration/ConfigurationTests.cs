@@ -1,12 +1,12 @@
 using System.Net;
 using MadDonkeySoftware.SystemWrappers.IO;
+using MdsCloud.Identity.Core.Interfaces;
 using MdsCloud.Identity.Infrastructure.Repositories;
-using MdsCloud.Identity.Settings;
+using MdsCloud.Identity.Presentation.Controllers.V1;
+using MdsCloud.Identity.Presentation.DTOs.Authentication;
+using MdsCloud.Identity.Presentation.DTOs.Configuration;
+using MdsCloud.Identity.Presentation.Utils;
 using MdsCloud.Identity.Test.TestHelpers;
-using MdsCloud.Identity.UI.Controllers.V1;
-using MdsCloud.Identity.UI.DTOs.Authentication;
-using MdsCloud.Identity.UI.DTOs.Configuration;
-using MdsCloud.Identity.UI.Utils;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Moq;

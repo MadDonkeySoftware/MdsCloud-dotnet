@@ -1,8 +1,8 @@
 using System.Net;
 using MadDonkeySoftware.SystemWrappers.IO;
-using MdsCloud.Identity.Settings;
+using MdsCloud.Identity.Core.Interfaces;
+using MdsCloud.Identity.Presentation.DTOs.PublicSignature;
 using MdsCloud.Identity.Test.TestHelpers;
-using MdsCloud.Identity.UI.DTOs.PublicSignature;
 using Microsoft.Extensions.DependencyInjection;
 using Moq;
 using Newtonsoft.Json;

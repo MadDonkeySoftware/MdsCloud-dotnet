@@ -1,3 +1,4 @@
+using MdsCloud.Identity.Core.Model;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
@@ -5,7 +6,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace MdsCloud.Identity.Test.TestHelpers;
 
-public class IdentityWebApplicationFactory : WebApplicationFactory<Domain.Account>
+public class IdentityWebApplicationFactory : WebApplicationFactory<Account>
 {
     public EventHandler<IServiceCollection>? OnConfigureServices;
     public string? DbConnectionString { get; set; }

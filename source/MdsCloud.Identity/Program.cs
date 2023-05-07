@@ -2,17 +2,17 @@ using System.Security.Cryptography;
 using System.Transactions;
 using Dapper;
 using MadDonkeySoftware.SystemWrappers.IO;
-using MdsCloud.Identity.Domain;
 using MdsCloud.Common.API.Logging;
 using MdsCloud.Common.API.Middleware;
-using MdsCloud.Identity.Business.Interfaces;
-using MdsCloud.Identity.Business.Services;
-using MdsCloud.Identity.Domain.Lookups;
+using MdsCloud.Identity.Core.Interfaces;
+using MdsCloud.Identity.Core.Lookups;
+using MdsCloud.Identity.Core.Model;
+using MdsCloud.Identity.Core.Services;
+using MdsCloud.Identity.Infrastructure;
 using MdsCloud.Identity.Infrastructure.Repositories;
-using MdsCloud.Identity.Settings;
-using MdsCloud.Identity.UI.Authentication;
-using MdsCloud.Identity.UI.Authorization;
-using MdsCloud.Identity.UI.Utils;
+using MdsCloud.Identity.Presentation.Authentication;
+using MdsCloud.Identity.Presentation.Authorization;
+using MdsCloud.Identity.Presentation.Utils;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 
 Task InitializeSystemData(WebApplication? app, IConfiguration config, int attempts = 0)

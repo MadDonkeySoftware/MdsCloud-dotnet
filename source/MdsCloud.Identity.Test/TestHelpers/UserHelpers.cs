@@ -1,5 +1,5 @@
 using System.Net;
-using MdsCloud.Identity.UI.DTOs.Registration;
+using MdsCloud.Identity.Presentation.DTOs.Registration;
 using Newtonsoft.Json;
 
 namespace MdsCloud.Identity.Test.TestHelpers;

@@ -18,9 +18,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Reference Include="FluentMigrator">
-      <HintPath>..\..\..\.nuget\packages\fluentmigrator\3.3.2\lib\netstandard2.0\FluentMigrator.dll</HintPath>
-    </Reference>
     <Reference Include="MadDonkeySoftware.SystemWrappers">
       <HintPath>..\..\future-nuget-files\MadDonkeySoftware.SystemWrappers.dll</HintPath>
     </Reference>
@@ -28,10 +25,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\MdsCloud.Common.API\MdsCloud.Common.API.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="Domain\Interfaces\" />
   </ItemGroup>
 
 </Project>

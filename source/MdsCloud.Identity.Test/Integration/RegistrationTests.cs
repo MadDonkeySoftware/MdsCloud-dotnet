@@ -1,12 +1,12 @@
 using System.Net;
 using System.Transactions;
 using Dapper;
-using MdsCloud.Identity.Domain;
+using MdsCloud.Identity.Core.Interfaces;
+using MdsCloud.Identity.Core.Model;
 using MdsCloud.Identity.Infrastructure.Repositories;
-using MdsCloud.Identity.Settings;
+using MdsCloud.Identity.Presentation.DTOs.Registration;
+using MdsCloud.Identity.Presentation.Utils;
 using MdsCloud.Identity.Test.TestHelpers;
-using MdsCloud.Identity.UI.DTOs.Registration;
-using MdsCloud.Identity.UI.Utils;
 using Microsoft.Extensions.DependencyInjection;
 using Moq;
 using Newtonsoft.Json;
